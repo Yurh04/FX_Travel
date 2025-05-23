@@ -8,10 +8,10 @@ spring:
     # url: jdbc:mysql://localhost:3306/fxtravel_g14?serverTimezone=UTC
     url: jdbc:mysql://localhost:3306/fxtravel_g14?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8&autoReconnect=true
     username: 'root'
-    password: 'yyyYYY&0121'
+    password: '050322yhq'
     hikari:
       username: 'root'
-      password: 'yyyYYY&0121'
+      password: '050322yhq'
       driver-class-name: com.mysql.cj.jdbc.Driver
       maximum-pool-size: 3000
       minimum-idle: 10
@@ -19,3 +19,16 @@ spring:
     database: mysql
     hibernate:
       ddl-auto: update
+
+  mail:
+    host: smtp.qq.com           # 邮件服务器
+    port: 587
+    username: 2137233787@qq.com
+    password: sqnktakdreyuifjh  # 不是邮箱密码，是“应用专用密码”
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
