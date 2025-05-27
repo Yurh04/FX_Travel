@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.pojo.dto;
+package org.fxtravel.fxspringboot.pojo.dto.payment;
 
 import jakarta.annotation.Nullable;
 import lombok.Data;

@@ -1,6 +1,6 @@
 package org.fxtravel.fxspringboot.service.inter;
 
-import org.fxtravel.fxspringboot.pojo.dto.TrainMealQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 
 import java.util.List;

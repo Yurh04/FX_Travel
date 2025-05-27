@@ -2,9 +2,9 @@ package org.fxtravel.fxspringboot.controller;
 
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentDTO;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentQueryDTO;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentResultDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
 import org.fxtravel.fxspringboot.service.inter.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/payment")
@@ -75,6 +74,12 @@ public class PaymentController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/finish/{orderNumber}")
+    public ResponseEntity<Boolean> finishPayment(@PathVariable String orderNumber) {
+        boolean result = paymentService.finishPayment(orderNumber);
+        return ResponseEntity.ok(result);
+    }
+
     // -------------------- 统计接口 --------------------
     @GetMapping("/stats/{type}")
     public ResponseEntity<Double> sumAmountByType(@PathVariable E_PaymentType type) {
@@ -92,8 +97,8 @@ public class PaymentController {
     }
 
     @GetMapping("/async/{orderNumber}")
-    public ResponseEntity<E_PaymentStatus> getAsyncStatus(@PathVariable String orderNumber) {
-        E_PaymentStatus result = paymentService.checkPaymentStatus(orderNumber);
+    public ResponseEntity<PaymentResultDTO> getAsyncStatus(@PathVariable String orderNumber) {
+        PaymentResultDTO result = paymentService.checkPaymentStatus(orderNumber);
         return ResponseEntity.ok(result);
     }
 }

@@ -5,13 +5,13 @@ spring:
     name: FXTravel
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # url: jdbc:mysql://localhost:3306/fxtravel_g14?serverTimezone=UTC
-    url: jdbc:mysql://localhost:3306/fxtravel_g14?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8&autoReconnect=true
+    url: jdbc:mysql://localhost:3306/fxtravel_g14?serverTimezone=UTC
+    # url: jdbc:mysql://localhost:3306/fxtravel_g14?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8&autoReconnect=true
     username: 'root'
-    password: '050322yhq'
+    password: 'yyyYYY&0121'
     hikari:
       username: 'root'
-      password: '050322yhq'
+      password: 'yyyYYY&0121'
       driver-class-name: com.mysql.cj.jdbc.Driver
       maximum-pool-size: 3000
       minimum-idle: 10
