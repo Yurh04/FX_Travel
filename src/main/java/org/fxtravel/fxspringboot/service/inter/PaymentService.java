@@ -2,15 +2,23 @@ package org.fxtravel.fxspringboot.service.inter;
 
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentDTO;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentQueryDTO;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentResultDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public interface PaymentService {
+    // 回调接口定义
+    @FunctionalInterface
+    public interface PaymentStatusCallback {
+        void onPaymentStatusChanged(Integer relatedId, E_PaymentStatus newStatus);
+    }
+
+    // 注册/注销回调方法
+    void registerCallback(E_PaymentType type, PaymentStatusCallback callback);
+    void unregisterCallback(E_PaymentType type);
+
     // -------------------- 基础支付操作 --------------------
     /**
      * 创建支付订单
@@ -42,6 +50,13 @@ public interface PaymentService {
      * @return 是否成功退款
      */
     boolean refundPayment(String orderNumber);
+
+    /**
+     * 完成交易（标记为不可退款状态）
+     * @param orderNumber 订单号
+     * @return 是否成功标记为完成
+     */
+    boolean finishPayment(String orderNumber);
 
     // -------------------- 管理员查询接口 --------------------
     /**
@@ -93,5 +108,12 @@ public interface PaymentService {
      * @param orderNumber 订单号
      * @return 当前支付状态
      */
-    E_PaymentStatus checkPaymentStatus(String orderNumber);
+    PaymentResultDTO checkPaymentStatus(String orderNumber);
+
+    /**
+     * 检查支付状态
+     * @param paymentId 订单Id
+     * @return 当前支付状态
+     */
+    PaymentResultDTO checkPaymentStatus(Integer paymentId);
 }

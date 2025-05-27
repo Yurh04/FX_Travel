@@ -1,12 +1,11 @@
 package org.fxtravel.fxspringboot.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import jakarta.annotation.Nullable;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
-import org.fxtravel.fxspringboot.pojo.dto.PaymentQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
 
 import java.time.LocalDateTime;

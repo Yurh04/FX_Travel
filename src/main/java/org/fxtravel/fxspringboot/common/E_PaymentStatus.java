@@ -5,5 +5,6 @@ public enum E_PaymentStatus {
     PENDING,    // 待支付
     COMPLETED,  // 已完成
     FAILED,     // 已失败
-    REFUNDED    // 已退款
+    REFUNDED,   // 已退款
+    FINISHED    // 已交易(不能退款)
 }

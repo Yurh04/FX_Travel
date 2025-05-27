@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.pojo.dto;
+package org.fxtravel.fxspringboot.pojo.dto.trainmeal;
 
 import lombok.Data;
 

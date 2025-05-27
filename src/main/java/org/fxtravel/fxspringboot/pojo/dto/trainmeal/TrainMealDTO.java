@@ -1,10 +1,7 @@
-package org.fxtravel.fxspringboot.pojo.dto;
+package org.fxtravel.fxspringboot.pojo.dto.trainmeal;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.fxtravel.fxspringboot.common.E_MealTime;
 
 @Data

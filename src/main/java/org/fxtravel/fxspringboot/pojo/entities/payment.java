@@ -27,4 +27,5 @@ public class payment {
     private Double amount; // 支付金额
     private LocalDateTime paymentTime; // 支付时间
     private Integer relatedId; // 关联的业务ID（如车票ID、餐食订单ID、酒店订单ID）
+    private Long timeoutSeconds;
 }

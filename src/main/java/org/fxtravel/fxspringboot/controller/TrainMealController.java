@@ -1,8 +1,7 @@
 package org.fxtravel.fxspringboot.controller;
 
-import com.fasterxml.jackson.databind.util.BeanUtil;
-import org.fxtravel.fxspringboot.pojo.dto.TrainMealDTO;
-import org.fxtravel.fxspringboot.pojo.dto.TrainMealQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealDTO;
+import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 import org.fxtravel.fxspringboot.service.inter.TrainMealService;
 import org.springframework.beans.BeanUtils;
