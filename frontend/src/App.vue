@@ -2,6 +2,10 @@
   <router-view />
 </template>
 
+<script setup>
+// 一般无需其它内容
+</script>
+
 <style scoped>
 nav {
   display: flex;
