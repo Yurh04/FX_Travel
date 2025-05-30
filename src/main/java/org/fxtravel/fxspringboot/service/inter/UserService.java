@@ -26,4 +26,16 @@ public interface UserService {
     public boolean updateUserData(User user, String userName, Gender gender);
 
     public boolean grantAdminRole(Integer userId);
+
+    /**
+     * 根据用户ID获取用户信息
+     * @param userId 用户ID
+     * @return 用户实体
+     */
+    public User getUserById(Integer userId);
+
 }
+
+
+
+
