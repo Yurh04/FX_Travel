@@ -16,7 +16,7 @@ const routes = [
     { path: '/', name: 'HotelHome', component: HotelHome },
     { path: '/search', name: 'HotelSearch', component: HotelSearch },
     { path: '/hotels/:id', name: 'HotelDetail', component: HotelDetail, props: true },
-    { path: '/booking/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
+    { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
     { path: '/train', name: 'train', component: TrainHome },
     { path: '/booking', name: 'TrainBooking', component: TrainBooking },
     { path: '/orders', name: 'OrderHistory', component: OrderHistory },
