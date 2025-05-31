@@ -16,7 +16,7 @@ const routes = [
     // 酒店详情
     { path: '/hotels/:id', name: 'HotelDetail', component: HotelDetail, props: true },
     // 酒店预订表单（可选 bookingId 用于编辑或查看）
-    { path: '/booking/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
+    { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
     { path: '/homepage', name: 'HomePage', component: HomePage },
     { path: '/booking', name: 'TrainBooking', component: TrainBooking },
     { path: '/orders', name: 'OrderHistory', component: OrderHistory },
