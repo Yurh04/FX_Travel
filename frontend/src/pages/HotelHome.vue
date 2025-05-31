@@ -120,7 +120,7 @@ const currentMenu = ref(route.path.startsWith('/train') ? 'train' : 'hotel')
 
 function goTrain() {
   currentMenu.value = 'train'
-  if (route.path !== '/homepage') router.push('/homepage')
+  if (route.path !== '/train') router.push('/train')
 }
 //搜索表单绑定
 const searchCity = ref('北京')
