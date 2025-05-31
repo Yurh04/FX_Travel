@@ -6,11 +6,15 @@ import router from './router'
 // 1. 引入 Element Plus
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import { createPinia } from 'pinia'
+
+
 
 const app = createApp(App)
 
 // 2. 安装 Element Plus 插件
 app.use(ElementPlus)
+app.use(createPinia())
 
 app.use(router)
 app.mount('#app')

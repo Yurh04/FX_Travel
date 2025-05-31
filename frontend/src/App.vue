@@ -3,7 +3,14 @@
 </template>
 
 <script setup>
-// 一般无需其它内容
+// App.vue
+import { onMounted } from 'vue'
+import { useUserStore } from './store/user.js'
+
+onMounted(() => {
+  useUserStore().restoreSession()
+})
+
 </script>
 
 <style scoped>

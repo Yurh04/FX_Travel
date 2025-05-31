@@ -14,12 +14,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-const username = ref('')
-const password = ref('')
-const handleLogin = () => {
-  alert(`登录中：${username.value}`)
+import { useUserStore } from '../store/user.js'
+
+const userStore = useUserStore()
+
+const handleLogin = async () => {
+  try {
+    const res = await login({ email: username.value, password: password.value })
+    userStore.login(res) // 存入状态和 localStorage
+    router.push('/train')
+  } catch (err) {
+    errorMsg.value = err?.response?.data?.error || '登录失败'
+  }
 }
+
 </script>
 
 <style scoped>

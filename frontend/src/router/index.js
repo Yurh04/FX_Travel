@@ -9,6 +9,7 @@ import HotelSearch from '../pages/HotelSearch.vue'
 import HotelDetail from '../pages/HotelDetail.vue'
 import BookingForm from '../pages/BookingForm.vue'
 import TrainSearchResult from "../pages/TrainSearchResult.vue";
+import registerPage from "../pages/RegisterPage.vue"
 
 
 const routes = [
@@ -21,7 +22,9 @@ const routes = [
     { path: '/orders', name: 'OrderHistory', component: OrderHistory },
     { path: '/meal', name: 'TrainMeal', component: TrainMeal },
     { path: '/login', name: 'LoginPage', component: LoginPage },
-    { path: '/train/result?', name : "trainResult", component: TrainSearchResult, props: true}
+    { path: '/train/result', name : "trainResult", component: TrainSearchResult, props: true},
+    { path: '/register', name: "registerPage", component: registerPage, props: true}
+
 ]
 
 const router = createRouter({
