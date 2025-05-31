@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.*;
 
 import org.fxtravel.fxspringboot.pojo.entities.User;
 
+@Mapper
 public interface UserMapper  extends BaseMapper<User> {
     //插入用户
     @Insert("INSERT INTO user (email, password, verified, role) " +
