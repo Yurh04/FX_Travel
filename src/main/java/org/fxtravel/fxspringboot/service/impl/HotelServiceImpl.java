@@ -29,32 +29,29 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     public List<Hotel> searchHotels(String destination, String sortBy, boolean ascending) {
-        String validSortField = "price".equals(sortBy) ? "price_per_night" : "rating";
-        String direction = ascending ? "ASC" : "DESC";
-        return hotelMapper.searchAvailableHotels(destination, validSortField, direction);
+        List<Hotel> hotels = hotelMapper.searchAvailableHotels(destination);
+        hotels.forEach(hotel ->
+                hotel.setRoomTypes(hotelMapper.findRoomTypesByHotelId(hotel.getHotelId())));
+        return hotels;
     }
 
     @Override
     @Transactional
     public HotelBooking bookHotel(Integer userId, String hotelId, String roomTypeId,
                                   LocalDate checkIn, LocalDate checkOut) {
-        // 1. 检查房型可用性
         RoomType roomType = hotelMapper.findRoomTypeById(roomTypeId);
         if (roomType == null || roomType.getStock() <= 0) {
-            throw new IllegalStateException("该房型不可预订");
+            throw new IllegalStateException("Room not available");
         }
 
-        // 2. 获取酒店信息
         Hotel hotel = hotelMapper.findHotelById(hotelId);
         if (hotel == null || !hotel.getEnabled()) {
-            throw new IllegalStateException("酒店不可用");
+            throw new IllegalStateException("Hotel not available");
         }
 
-        // 3. 计算总价
         long nights = checkIn.until(checkOut).getDays();
         double totalAmount = hotel.getPricePerNight() * roomType.getPriceMultiplier() * nights;
 
-        // 4. 创建预订记录
         HotelBooking booking = new HotelBooking();
         booking.setBookingId(UUID.randomUUID().toString());
         booking.setUserId(userId);
@@ -69,12 +66,11 @@ public class HotelServiceImpl implements HotelService {
         hotelMapper.saveBooking(booking);
         hotelMapper.decreaseRoomStock(roomTypeId, 1);
 
-        // 5. 发送通知 - 使用标准通知接口
-        NotificationRequestDTO notificationRequest = new NotificationRequestDTO();
-        notificationRequest.setUserId(userId);
-        notificationRequest.setEventType(E_NotificationEventType.HOTEL_BOOKED);
-        notificationRequest.setOrderId(booking.getBookingId());
-        notificationService.createNotification(notificationRequest);
+        NotificationRequestDTO notification = new NotificationRequestDTO();
+        notification.setUserId(userId);
+        notification.setEventType(E_NotificationEventType.HOTEL_BOOKED);
+        notification.setOrderId(booking.getBookingId());
+        notificationService.createNotification(notification);
 
         return booking;
     }
@@ -82,25 +78,25 @@ public class HotelServiceImpl implements HotelService {
     @Override
     @Transactional
     public void cancelBooking(String bookingId, Integer userId) {
-        HotelBooking booking = hotelMapper.findBookingsByUserId(userId).stream()
-                .filter(b -> bookingId.equals(b.getBookingId()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("无效的预订ID"));
+        HotelBooking booking = hotelMapper.findBookingById(bookingId);
+        if (booking == null || booking.getUserId()!=userId) {
+            throw new IllegalArgumentException("Invalid booking ID");
+        }
 
         if (!E_HotelBookingStatus.CONFIRMED.toString().equals(booking.getStatus())) {
-            throw new IllegalStateException("只有已确认的预订可以取消");
+            throw new IllegalStateException("Only confirmed bookings can be canceled");
         }
 
         hotelMapper.cancelBooking(bookingId);
         hotelMapper.increaseRoomStock(booking.getRoomTypeId(), 1);
 
-        // 发送取消通知
-        NotificationRequestDTO notificationRequest = new NotificationRequestDTO();
-        notificationRequest.setUserId(userId);
-        notificationRequest.setEventType(E_NotificationEventType.ORDER_CANCELLED);
-        notificationRequest.setOrderId(booking.getBookingId());
-        notificationService.createNotification(notificationRequest);
+        NotificationRequestDTO notification = new NotificationRequestDTO();
+        notification.setUserId(userId);
+        notification.setEventType(E_NotificationEventType.ORDER_CANCELLED);
+        notification.setOrderId(bookingId);
+        notificationService.createNotification(notification);
     }
+
     @Override
     public List<HotelBooking> getUserBookings(Integer userId) {
         return hotelMapper.findBookingsByUserId(userId);
@@ -108,6 +104,16 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     public Hotel getHotelDetails(String hotelId) {
-        return hotelMapper.findHotelById(hotelId);
+        Hotel hotel = hotelMapper.findHotelById(hotelId);
+        if (hotel != null) {
+            hotel.setRoomTypes(hotelMapper.findRoomTypesByHotelId(hotelId));
+        }
+        return hotel;
+    }
+
+    @Override
+    public List<Hotel> getHotelsSorted(String sortBy, boolean ascending) {
+        String direction = ascending ? "ASC" : "DESC";
+        return hotelMapper.findAllSorted(sortBy, direction);
     }
 }

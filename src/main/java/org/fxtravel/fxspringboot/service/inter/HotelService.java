@@ -25,4 +25,6 @@ public interface HotelService {
 
     // 获取酒店详情
     Hotel getHotelDetails(String hotelId);
+
+    public List<Hotel> getHotelsSorted(String sortBy, boolean ascending);
 }
