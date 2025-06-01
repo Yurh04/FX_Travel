@@ -1,85 +1,87 @@
-// src/pages/TrainHomePage.vue
 <template>
-  <div class="train-home-page">
-    <div class="hero">
-      <h1>欢迎使用火车票预订系统</h1>
-      <p>快速、便捷、安全地预订您的火车票</p>
-      <router-link to="/train-search">
-        <button class="primary-button">立即订票</button>
-      </router-link>
-    </div>
-
-    <div class="features">
-      <div class="feature-item">
-        <h3>🚄 多种车型</h3>
-        <p>支持高铁、动车、普快等多种列车类型</p>
+  <div class="booking-page">
+    <div class="booking-card">
+      <h2>确认预订</h2>
+      <div class="info">
+        <p><strong>车次：</strong>{{ trainId }}</p>
+        <p><strong>出发城市：</strong>{{ from }}</p>
+        <p><strong>到达城市：</strong>{{ to }}</p>
+        <p><strong>出发时间：</strong>{{ departTime }}</p>
+        <p><strong>到达时间：</strong>{{ arriveTime }}</p>
+        <p><strong>座席：</strong>{{ seat }}</p>
       </div>
-      <div class="feature-item">
-        <h3>📅 灵活查询</h3>
-        <p>可按出发地、目的地和时间进行筛选</p>
-      </div>
-      <div class="feature-item">
-        <h3>💳 在线下单</h3>
-        <p>快速下单、实时锁票，便捷高效</p>
-      </div>
+      <button class="confirm-btn" @click="confirmBooking">确认预订</button>
     </div>
   </div>
 </template>
 
 <script setup>
-// 无逻辑，仅展示首页引导
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+
+const route = useRoute()
+const router = useRouter()
+
+const trainId = route.query.trainId || '未知'
+const from = route.query.from || '未知'
+const to = route.query.to || '未知'
+const departTime = route.query.departTime || '--:--'
+const arriveTime = route.query.arriveTime || '--:--'
+const seat = route.query.seat || '无座'
+
+const confirmBooking = () => {
+  ElMessage.success('预订成功！')
+  setTimeout(() => router.push('/'), 1500)
+}
 </script>
 
 <style scoped>
-.train-home-page {
-  text-align: center;
-  padding: 60px 20px;
-  background-color: #f7f8fa;
-}
-
-.hero h1 {
-  font-size: 36px;
-  color: #2a5fff;
-  margin-bottom: 12px;
-}
-.hero p {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 24px;
-}
-.primary-button {
-  padding: 12px 28px;
-  font-size: 16px;
-  background-color: #2a5fff;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.primary-button:hover {
-  background-color: #1f4ed8;
-}
-
-.features {
+.booking-page {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 48px;
+  align-items: center;
+  min-height: 90vh;
+  background: linear-gradient(to right, #e6f0ff, #f9fbff);
+  font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
-.feature-item {
-  width: 250px;
+
+.booking-card {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 32px 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 360px;
+  text-align: left;
 }
-.feature-item h3 {
-  margin-bottom: 8px;
+
+.booking-card h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
   color: #333;
+  text-align: center;
 }
-.feature-item p {
-  color: #666;
-  font-size: 14px;
+
+.info p {
+  font-size: 15px;
+  color: #555;
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.confirm-btn {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  background: linear-gradient(to right, #409eff, #66b1ff);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.confirm-btn:hover {
+  background: linear-gradient(to right, #3a8ee6, #5caceb);
 }
 </style>

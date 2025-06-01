@@ -1,7 +1,7 @@
 <template>
   <div class="login-notice">
     <div class="notice-text">
-      <i class="iconfont">&#xe600;</i> 登录12306账号完成实名认证，出票更快
+      <i class="iconfont">&#xe600;</i>登录
     </div>
     <button class="login-button" @click="goLogin">去登录</button>
   </div>

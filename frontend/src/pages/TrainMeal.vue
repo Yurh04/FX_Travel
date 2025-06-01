@@ -5,19 +5,21 @@
     <!-- 🔍 输入车次 -->
     <div class="search-box">
       <input v-model="trainId" placeholder="请输入已购票车次号" />
-      <button @click="getMenu">获取菜单</button>
+      <button :disabled="loading" @click="getMenu">
+        {{ loading ? '加载中...' : '获取菜单' }}
+      </button>
     </div>
 
-    <!-- 📋 菜单展示 -->
+    <!-- 📋 菜单展示（单选） -->
     <div v-if="menu.length" class="menu-list">
-      <div class="meal-card" v-for="item in menu" :key="item.name">
-        <img :src="item.img" alt="meal" />
+      <div class="meal-card" v-for="item in menu" :key="item.id">
+        <img :src="item.image || defaultImg" alt="meal" />
         <div class="info">
           <h4>{{ item.name }}</h4>
           <p>{{ item.description }}</p>
           <p class="price">￥{{ item.price }}</p>
           <label>
-            <input type="checkbox" v-model="selectedItems" :value="item.name" />
+            <input type="radio" v-model="selectedItem" :value="item" />
             选择
           </label>
         </div>
@@ -30,62 +32,74 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '../store/user'
+import { fetchTrainMealList, createTrainMealOrder } from '../api/trainMeal'
 
-const trainId = ref('')
-const selectedItems = ref([])
+// 默认图片
+const defaultImg = 'https://cdn-icons-png.flaticon.com/512/2975/2975175.png'
+
+// 状态
+const route = useRoute()
+const trainId = ref(route.query.trainId || '')
 const menu = ref([])
+const selectedItem = ref(null)
+const loading = ref(false)
 
-// 示例菜单数据（可替换为后端接口）
-const exampleMenu = [
-  {
-    name: '牛肉饭套餐',
-    price: 38,
-    img: '',
-    description: '卤牛肉、米饭、凉拌黄瓜、饮料'
-  },
-  {
-    name: '鸡腿饭套餐',
-    price: 32,
-    img: '',
-    description: '烤鸡腿、米饭、小菜、矿泉水'
-  },
-  {
-    name: '素食便当',
-    price: 28,
-    img: '',
-    description: '素炒三样、豆腐、饭、汤'
-  }
-]
+// 监听 route 中 trainId 变化
+watch(() => route.query.trainId, (newId) => {
+  if (newId) trainId.value = newId
+})
 
+// 登录用户
+const userStore = useUserStore()
+const userId = computed(() => userStore.user?.id || null)
+
+// 获取菜单
 const getMenu = async () => {
   if (!trainId.value) {
-    alert('请输入车次号')
+    ElMessage.warning('请输入车次号')
     return
   }
 
-  // ✅ 示例：模拟接口返回菜单
-  menu.value = exampleMenu
-
-  // 若使用接口请替换：
-  // const res = await axios.get('/api/v1/train/meal/menu', { params: { trainId: trainId.value } })
-  // menu.value = res.data
+  loading.value = true
+  try {
+    const result = await fetchTrainMealList(trainId.value)
+    menu.value = result
+    if (!result.length) ElMessage.info('该列车暂无可订餐食')
+  } catch (err) {
+    ElMessage.error(err.message)
+  } finally {
+    loading.value = false
+  }
 }
 
+// 提交订餐
 const submitOrder = async () => {
-  if (selectedItems.value.length === 0) {
-    alert('请选择至少一项餐品')
+  if (!selectedItem.value) {
+    ElMessage.warning('请选择一项餐品')
     return
   }
 
-  const res = await axios.post('http://localhost:8080/api/v1/train/meal/order', {
-    userId: 'u001',
-    trainId: trainId.value,
-    items: selectedItems.value
-  })
+  if (!userId.value) {
+    ElMessage.error('未登录，无法下单')
+    return
+  }
 
-  alert(res.data.message || '订餐成功')
+  try {
+    await createTrainMealOrder({
+      userId: userId.value,
+      ticketReservationId: 10001, // TODO: 实际应从车票信息中传入
+      trainMealId: selectedItem.value.id
+    })
+
+    ElMessage.success('订餐成功！')
+    selectedItem.value = null
+  } catch (err) {
+    ElMessage.error(err.message)
+  }
 }
 </script>
 
@@ -115,6 +129,15 @@ const submitOrder = async () => {
   border: none;
   padding: 8px 20px;
   border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.search-box button:disabled {
+  background: #a2c8f4;
+  cursor: not-allowed;
+}
+.search-box button:hover:not(:disabled) {
+  background: #1670e0;
 }
 
 .menu-list {
@@ -160,6 +183,10 @@ const submitOrder = async () => {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.3s;
+}
+.submit-btn:hover {
+  background: #1670e0;
 }
 .tip {
   color: #999;

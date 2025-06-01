@@ -3,13 +3,13 @@ import TrainBooking from '../pages/TrainBooking.vue'
 import OrderHistory from '../pages/OrderHistory.vue'
 import TrainMeal from '../pages/TrainMeal.vue'
 import TrainHome from '../pages/TrainHome.vue'
-import LoginPage from '../pages/LoginPage.vue'
 import HotelHome from '../pages/HotelHome.vue'
 import HotelSearch from '../pages/HotelSearch.vue'
 import HotelDetail from '../pages/HotelDetail.vue'
 import BookingForm from '../pages/BookingForm.vue'
-import TrainSearchResult from "../pages/TrainSearchResult.vue";
-import registerPage from "../pages/RegisterPage.vue"
+import TrainSearchResult from '../pages/TrainSearchResult.vue'
+import AuthPage from '../pages/auth-page.vue'
+
 
 
 const routes = [
@@ -21,9 +21,8 @@ const routes = [
     { path: '/booking', name: 'TrainBooking', component: TrainBooking },
     { path: '/orders', name: 'OrderHistory', component: OrderHistory },
     { path: '/meal', name: 'TrainMeal', component: TrainMeal },
-    { path: '/login', name: 'LoginPage', component: LoginPage },
-    { path: '/train/result', name : "trainResult", component: TrainSearchResult, props: true},
-    { path: '/register', name: "registerPage", component: registerPage, props: true}
+    { path: '/train-result', name: 'trainResult', component: TrainSearchResult, props: true },
+    { path: '/auth',name:"Authentication", component: AuthPage },
 
 ]
 
@@ -32,4 +31,4 @@ const router = createRouter({
     routes
 })
 
-export default router
+export default router;

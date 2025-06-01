@@ -1,196 +1,254 @@
 <template>
-  <div class="train-search-bar">
-    <!-- 城市选择 -->
-    <div class="city-row">
-      <div class="input-group">
-        <label>出发城市</label>
-        <input v-model="fromCity" placeholder="出发城市" />
-      </div>
-      <button class="swap-btn" @click="swapCity">⇄</button>
-      <div class="input-group">
-        <label>到达城市</label>
-        <input v-model="toCity" placeholder="到达城市" />
-      </div>
+  <div class="flat-search-bar">
+    <!-- 行程选择 -->
+    <div class="trip-options">
+      <label>
+        <input type="radio" v-model="tripType" value="oneway" />
+        <span class="radio-label" :class="{ active: tripType === 'oneway' }">单程</span>
+      </label>
+      <label>
+        <input type="radio" v-model="tripType" value="round" />
+        <span class="radio-label" :class="{ active: tripType === 'round' }">往返</span>
+      </label>
     </div>
 
-    <!-- 日期选择 -->
-    <div class="input-group">
-      <label>出发日期</label>
-      <input type="date" v-model="localDate" />
-    </div>
+    <!-- 城市与日期选择 -->
+    <div class="form-row">
+      <div class="form-box" @click.stop="activeField = 'from'">
+        <div class="label">出发城市</div>
+        <div class="value">{{ fromCity || '请选择' }}</div>
+        <transition name="fade">
+          <CitySelect v-if="activeField === 'from'" @select="selectCity('from', $event)" />
+        </transition>
+      </div>
 
-    <!-- 可选返程 -->
-    <div v-if="showReturn" class="input-group return-box">
-      <label>返程日期</label>
-      <div class="input-with-clear">
+      <button class="swap-btn" @click="swapCities">⇄</button>
+
+      <div class="form-box" @click.stop="activeField = 'to'">
+        <div class="label">到达城市</div>
+        <div class="value">{{ toCity || '请选择' }}</div>
+        <transition name="fade">
+          <CitySelect v-if="activeField === 'to'" @select="selectCity('to', $event)" />
+        </transition>
+      </div>
+
+      <div class="form-box">
+        <div class="label">出发日期</div>
+        <input type="date" v-model="departureDate" />
+      </div>
+
+      <div class="form-box" v-if="tripType === 'round'">
+        <div class="label">返程日期</div>
         <input type="date" v-model="returnDate" />
-        <button class="remove-return" @click="removeReturn">×</button>
       </div>
-    </div>
-    <button v-else class="add-return" @click="showReturn = true">
-      + 添加返程
-    </button>
 
-    <!-- 搜索 -->
-    <button class="search-btn" @click="onSearchClick">搜索</button>
+      <button class="search-btn" @click="handleSearch">搜索</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
+import CitySelect from './CitySelect.vue'
+
+// ✅ 支持接收 props，从外部页面传入搜索初始值
+const props = defineProps({
+  from: String,
+  to: String,
+  departureDate: String,
+  returnDate: String,
+  tripType: String
+})
 
 const router = useRouter()
 
-const fromCity = ref('上海')
-const toCity = ref('北京')
-const localDate = ref(new Date().toISOString().split('T')[0])
-const showReturn = ref(false)
+// 搜索栏绑定字段
+const fromCity = ref('')
+const toCity = ref('')
+const departureDate = ref('')
 const returnDate = ref('')
+const tripType = ref('oneway') // 默认单程
+const activeField = ref(null)
 
-const swapCity = () => {
-  const temp = fromCity.value
+// ✅ 自动回填 props 到本地输入框
+watchEffect(() => {
+  if (props.from) fromCity.value = props.from
+  if (props.to) toCity.value = props.to
+  if (props.departureDate) departureDate.value = props.departureDate
+  if (props.returnDate) returnDate.value = props.returnDate
+  if (props.tripType) tripType.value = props.tripType
+})
+
+// 城市切换
+const swapCities = () => {
+  const tmp = fromCity.value
   fromCity.value = toCity.value
-  toCity.value = temp
+  toCity.value = tmp
 }
 
-const removeReturn = () => {
-  showReturn.value = false
-  returnDate.value = ''
+// 城市选择器点击回调
+const selectCity = (field, city) => {
+  if (field === 'from') fromCity.value = city
+  else toCity.value = city
+  activeField.value = null
 }
 
-const onSearchClick = () => {
-  if (!fromCity.value || !toCity.value) {
-    alert('请输入出发和到达城市')
+// 点击搜索按钮后跳转到查询页
+const handleSearch = () => {
+  if (!fromCity.value || !toCity.value || !departureDate.value) {
+    alert('请填写完整信息')
     return
   }
 
   router.push({
-    path: '/train/result',
+    path: '/train-result',
     query: {
-      from: fromCity.value,
-      to: toCity.value,
-      date: localDate.value,
-      return: showReturn.value ? returnDate.value : ''
+      fromCity: fromCity.value,
+      toCity: toCity.value,
+      departureDate: departureDate.value,
+      returnDate: returnDate.value,
+      tripType: tripType.value
     }
   })
 }
+
+// 点击空白关闭选择器
+const handleClickOutside = (e) => {
+  if (!e.target.closest('.form-box')) {
+    activeField.value = null
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('click', handleClickOutside)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleClickOutside)
+})
 </script>
 
+
 <style scoped>
-.train-search-bar {
+.flat-search-bar {
   background: white;
-  padding: 16px 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 1000px;
-  margin: 0 auto;
-  font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-}
-
-.city-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 160px;
-}
-
-.input-group input {
-  padding: 10px 14px;
+  border-radius: 16px;
+  padding: 24px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  width: 160px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
+  font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  max-width: 1080px;
+  margin: 0 auto;
 }
 
-input[type="date"]:focus,
-.input-group input:focus {
-  border-color: #409eff;
-  outline: none;
+.trip-options {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+}
+.trip-options input[type="radio"] {
+  margin-right: 6px;
+  accent-color: #1677ff;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: nowrap;         /* ✅ 保持一行 */
+  gap: 16px;
+  align-items: flex-end;
+  overflow-x: visible;       /* ✅ 去除滚动条 */
+}
+
+.form-box {
+  position: relative;
+  width: 160px;  /* ✅ 缩小宽度以容纳更多 */
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: border 0.2s;
+  z-index: 1;
+  flex-shrink: 0; /* 防止压扁 */
+}
+
+.form-box {
+  flex: 1 1 0;                /* ✅ 自动拉伸 */
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.swap-btn,
+.search-btn {
+  flex-shrink: 0;
+}
+
+.form-box:hover {
+  border-color: #1677ff;
+}
+.form-box input[type="date"] {
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  padding: 4px 0;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+}
+.form-box .label {
+  font-size: 12px;
+  color: #888;
+}
+.form-box .value {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #111;
 }
 
 .swap-btn {
   background: #1677ff;
   color: white;
   border: none;
-  border-radius: 50%;
   width: 36px;
   height: 36px;
-  font-size: 18px;
-  line-height: 1px;
-  text-align: center;
-  cursor: pointer;
-}
-.swap-btn:hover {
-  background: #005cbc;
-}
-
-.input-with-clear {
-  position: relative;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-}
-.input-with-clear input {
-  padding-right: 32px;
-}
-.remove-return {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  color: #999;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 28px;
   cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0;
 }
-.remove-return:hover {
-  color: #ff4d4f;
-}
-
-.add-return {
-  background: #e6f6ff;
-  color: #1677ff;
-  border: none;
-  padding: 8px 14px;
-  font-size: 14px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.add-return:hover {
-  background: #d0ebff;
+.swap-btn:hover {
+  background: #125edd;
 }
 
 .search-btn {
   background: #1677ff;
   color: white;
+  padding: 12px 24px;
+  font-size: 15px;
   border: none;
-  padding: 10px 24px;
-  font-size: 16px;
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.2s;
+  font-family: inherit;
+  flex-shrink: 0;
 }
 .search-btn:hover {
-  background: #005cbc;
+  background: #125edd;
 }
 
-@media (max-width: 768px) {
-  .train-search-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

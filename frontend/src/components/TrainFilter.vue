@@ -5,43 +5,33 @@
       <button class="reset-btn" @click="resetFilters">全部重置</button>
     </div>
 
-    <!-- 只显示有票 -->
     <div class="filter-section">
       <label><input type="checkbox" v-model="onlyAvailableProxy" /> 只看有票</label>
     </div>
 
-    <!-- 车型选择 -->
+    <!-- 车型 -->
     <div class="filter-section">
-      <div class="section-header">车型 <span class="reset" @click="selectedTypesProxy = []"> 重置 </span></div>
-      <div class="options checkbox-group">
+      <div class="section-header">车型 <span class="reset" @click="selectedTypesProxy = []">重置</span></div>
+      <div class="checkbox-group">
         <label v-for="type in trainTypes" :key="type">
           <input type="checkbox" :value="type" v-model="selectedTypesProxy" /> {{ type }}
         </label>
       </div>
     </div>
 
-    <!-- 出发时段 -->
+    <!-- 出发时间 -->
     <div class="filter-section">
       <div class="section-header">出发时间 <span class="reset" @click="selectedTimesProxy = []">重置</span></div>
-      <div class="options time-range-group">
+      <div class="time-range-group">
         <label v-for="range in timeRanges" :key="range">
           <input type="checkbox" :value="range" v-model="selectedTimesProxy" /> {{ range }}
         </label>
       </div>
     </div>
 
-    <!-- 高级筛选项展开区域 -->
+    <!-- 更多 -->
     <Transition name="fade-expand">
       <div v-if="props.expanded" class="more-options">
-        <!-- 到达时间 -->
-        <div class="filter-section">
-          <div class="section-header">到达时间 <span class="reset">重置</span></div>
-          <div class="time-range-group">
-            <button v-for="item in timeRanges" :key="item" class="time-btn">{{ item }}</button>
-          </div>
-        </div>
-
-        <!-- 座席 -->
         <div class="filter-section">
           <div class="section-header">座席 <span class="reset">重置</span></div>
           <div class="checkbox-group">
@@ -50,8 +40,6 @@
             </label>
           </div>
         </div>
-
-        <!-- 出发车站 -->
         <div class="filter-section">
           <div class="section-header">出发车站 <span class="reset">重置</span></div>
           <div class="checkbox-group">
@@ -60,8 +48,6 @@
             </label>
           </div>
         </div>
-
-        <!-- 到达车站 -->
         <div class="filter-section">
           <div class="section-header">到达车站 <span class="reset">重置</span></div>
           <div class="checkbox-group">
@@ -73,7 +59,6 @@
       </div>
     </Transition>
 
-    <!-- 展开控制按钮 -->
     <div class="expand-control" @click="emit('toggle-expand')">
       {{ props.expanded ? '收起列表 ▲' : '展开列表 ▼' }}
     </div>
@@ -81,13 +66,17 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+
 const props = defineProps({
-  modelValue: Boolean,
   onlyAvailable: Boolean,
   selectedTypes: Array,
   selectedTimes: Array,
-  expanded: Boolean
+  expanded: Boolean,
+  trains: {
+    type: Array,
+    default: () => []
+  }
 })
 const emit = defineEmits(['update:onlyAvailable', 'update:selectedTypes', 'update:selectedTimes', 'toggle-expand'])
 
@@ -100,11 +89,31 @@ watch(selectedTypesProxy, val => emit('update:selectedTypes', val))
 const selectedTimesProxy = ref([...props.selectedTimes])
 watch(selectedTimesProxy, val => emit('update:selectedTimes', val))
 
-const trainTypes = ['高铁(G/C)', '动车(D)', '普通(Z/T/K)', '其他(L/Y)']
 const timeRanges = ['00:00 - 06:00', '06:00 - 12:00', '12:00 - 18:00', '18:00 - 24:00']
-const seatTypes = ['二等座', '一等座', '商务座', '优选一等座', '硬座', '硬卧', '软卧', '无座', '二等卧', '一等卧']
-const departStations = ['上海虹桥', '上海', '上海松江', '上海南']
-const arriveStations = ['北京南', '北京', '北京丰台']
+
+const trainTypes = computed(() => {
+  return [...new Set(props.trains.map(t => {
+    if (t.type.includes('G') || t.type.includes('C')) return '高铁(G/C)'
+    if (t.type.includes('D')) return '动车(D)'
+    if (t.type.match(/Z|T|K/)) return '普通(Z/T/K)'
+    return '其他(L/Y)'
+  }))]
+})
+
+const seatTypes = computed(() => {
+  return [...new Set(props.trains.map(t => {
+    const match = t.seat?.match(/[\u4e00-\u9fa5]+/)
+    return match ? match[0] : ''
+  }).filter(Boolean))]
+})
+
+const departStations = computed(() => {
+  return [...new Set(props.trains.map(t => t.departStation).filter(Boolean))]
+})
+
+const arriveStations = computed(() => {
+  return [...new Set(props.trains.map(t => t.arriveStation).filter(Boolean))]
+})
 
 const resetFilters = () => {
   onlyAvailableProxy.value = false
@@ -153,15 +162,6 @@ const resetFilters = () => {
   gap: 8px;
   margin-top: 8px;
 }
-.time-btn {
-  background: #f5f7fa;
-  border: none;
-  border-radius: 10px;
-  padding: 10px;
-  cursor: pointer;
-  transition: 0.2s;
-  font-size: 14px;
-}
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -187,7 +187,6 @@ const resetFilters = () => {
   padding: 12px;
   border-radius: 8px;
 }
-/* 动画过渡样式 */
 .fade-expand-enter-active, .fade-expand-leave-active {
   transition: all 0.3s ease;
 }
