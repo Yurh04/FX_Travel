@@ -17,14 +17,13 @@
       <!-- 顶部导航栏 -->
       <header class="top-nav">
         <div class="logo-section" >
-          <img class="logo" src="/images/ICON.png" alt="飞雷旅行网">
+          <img class="logo" src="/images/ICON.png" alt="飞行旅行网">
           <span class="site-name">风行旅行</span>
         </div>
         <nav class="nav-links">
-          <a href="#" @click="go('/login')">登录</a>
-          <a href="#" @click.prevent="go('/register')">注册</a>
+          <a href="#" @click.prevent="go('/auth')">登录/注册</a>
           <a href="#" @click.prevent="go('/orders')">我的订单</a>
-          <a href="#" @click.prevent="go('/about')">关于我们</a>
+          <a href="#" @click.prevent="go('/aboutUs')">关于我们</a>
         </nav>
       </header>
 
@@ -46,7 +45,7 @@
                   入住
                   <input type="date" v-model="checkIn" />
                 </label>
-                <span class="nights">- 1晚 -</span>
+                <span class="nights">- {{ nights }}晚 -</span>
                 <label>
                   退房
                   <input type="date" v-model="checkOut" />
@@ -118,6 +117,24 @@ const route = useRoute()
 const currentMenu = ref(route.path.startsWith('/train') ? 'train' : 'hotel')
 
 
+// 计算住房天数
+const nights = computed(() => {
+  if (!checkIn.value || !checkOut.value) return 1 // 如果日期未选择，默认显示1晚
+
+  const startDate = new Date(checkIn.value)
+  const endDate = new Date(checkOut.value)
+
+  // 计算天数差
+  const timeDifference = endDate - startDate
+  const dayDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24))
+
+  return dayDifference > 0 ? dayDifference : 1 // 至少显示1晚
+})
+
+function go(path) {
+  router.push(path); // 使用 Vue Router 进行页面导航
+}
+
 function goTrain() {
   currentMenu.value = 'train'
   if (route.path !== '/train') router.push('/train')
@@ -143,7 +160,7 @@ const hotels = ref([
   {
     id: 2,
     city: '上海',
-    name: '上海浦东国际机场铂爱国际酒店',
+    name: '上海陆家嘴酒店',
     stars: 5,
     price: 588,
     img: 'https://dimg04.c-ctrip.com/images/0202r120008x8u4gdF9E7_R_400_400_R5_Q70_D.jpg'
@@ -273,7 +290,24 @@ function handleSearch() {
   color: #222;
   border-radius: 5px 0 0 5px;
   cursor: pointer;
-  transition: background .2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+.sidebar li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #1677ff;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+.sidebar li:hover::after,
+.sidebar li.active::after {
+  transform: translateX(0);
 }
 .sidebar li.active, .sidebar li:hover {
   background: #e6f6ff;
@@ -426,6 +460,13 @@ function handleSearch() {
   overflow: hidden;
   box-shadow: 0 2px 8px #e6f6ff;
   flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform: perspective(1px) translateZ(0);
+}
+.hotel-card:hover {
+  transform: perspective(1px) scale(1.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 .hotel-img {
   width: 100%;
@@ -523,7 +564,30 @@ function handleSearch() {
   z-index: 10;
 }
 
-.nav-links a { margin-left: 24px; color: #333; font-weight: 500; transition: color .2s; }
+.nav-links a {
+  margin-left: 24px;
+  color: #333;
+  font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 5px;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #1677ff;
+  transition: width 0.3s ease;
+}
+.nav-links a:hover::after {
+  width: 100%;
+}
+.nav-links a:hover { 
+  color: #1677ff;
+}
 .nav-links a:hover { color: #1677ff; }
 
 /* 主体与侧边并排 */
