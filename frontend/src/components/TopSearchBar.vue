@@ -4,55 +4,71 @@
     <div class="trip-options">
       <label>
         <input type="radio" v-model="tripType" value="oneway" />
-        <span class="radio-label" :class="{ active: tripType === 'oneway' }">单程</span>
+        <span class="radio-label" :class="{ active: tripType === 'oneway' }">
+          单程
+        </span>
       </label>
       <label>
         <input type="radio" v-model="tripType" value="round" />
-        <span class="radio-label" :class="{ active: tripType === 'round' }">往返</span>
+        <span class="radio-label" :class="{ active: tripType === 'round' }">
+          往返
+        </span>
       </label>
     </div>
 
     <!-- 城市与日期选择 -->
     <div class="form-row">
+      <!-- 出发城市 -->
       <div class="form-box" @click.stop="activeField = 'from'">
         <div class="label">出发城市</div>
         <div class="value">{{ fromCity || '请选择' }}</div>
         <transition name="fade">
-          <CitySelect v-if="activeField === 'from'" @select="selectCity('from', $event)" />
+          <CitySelect
+              v-if="activeField === 'from'"
+              @select="selectCity('from', $event)"
+          />
         </transition>
       </div>
 
+      <!-- 交换按钮 -->
       <button class="swap-btn" @click="swapCities">⇄</button>
 
+      <!-- 到达城市 -->
       <div class="form-box" @click.stop="activeField = 'to'">
         <div class="label">到达城市</div>
         <div class="value">{{ toCity || '请选择' }}</div>
         <transition name="fade">
-          <CitySelect v-if="activeField === 'to'" @select="selectCity('to', $event)" />
+          <CitySelect
+              v-if="activeField === 'to'"
+              @select="selectCity('to', $event)"
+          />
         </transition>
       </div>
 
+      <!-- 出发日期 -->
       <div class="form-box">
         <div class="label">出发日期</div>
         <input type="date" v-model="departureDate" />
       </div>
 
+      <!-- 返程日期，仅在往返时显示 -->
       <div class="form-box" v-if="tripType === 'round'">
         <div class="label">返程日期</div>
         <input type="date" v-model="returnDate" />
       </div>
 
+      <!-- 搜索按钮 -->
       <button class="search-btn" @click="handleSearch">搜索</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
+import { ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import CitySelect from './CitySelect.vue'
 
-// ✅ 支持接收 props，从外部页面传入搜索初始值
+// 接收父组件传入的初始值
 const props = defineProps({
   from: String,
   to: String,
@@ -63,15 +79,15 @@ const props = defineProps({
 
 const router = useRouter()
 
-// 搜索栏绑定字段
+// 绑定字段
 const fromCity = ref('')
 const toCity = ref('')
 const departureDate = ref('')
 const returnDate = ref('')
-const tripType = ref('oneway') // 默认单程
+const tripType = ref('oneway')
 const activeField = ref(null)
 
-// ✅ 自动回填 props 到本地输入框
+// 自动回填 props 到本地值
 watchEffect(() => {
   if (props.from) fromCity.value = props.from
   if (props.to) toCity.value = props.to
@@ -80,27 +96,28 @@ watchEffect(() => {
   if (props.tripType) tripType.value = props.tripType
 })
 
-// 城市切换
+// 交换城市
 const swapCities = () => {
   const tmp = fromCity.value
   fromCity.value = toCity.value
   toCity.value = tmp
 }
 
-// 城市选择器点击回调
+// 选中城市后：更新对应值，并关闭弹窗
 const selectCity = (field, city) => {
   if (field === 'from') fromCity.value = city
   else toCity.value = city
+
+  // 关闭 CitySelect 弹窗
   activeField.value = null
 }
 
-// 点击搜索按钮后跳转到查询页
+// 点击搜索按钮，携带参数跳转到结果页
 const handleSearch = () => {
   if (!fromCity.value || !toCity.value || !departureDate.value) {
     alert('请填写完整信息')
     return
   }
-
   router.push({
     path: '/train-result',
     query: {
@@ -113,7 +130,7 @@ const handleSearch = () => {
   })
 }
 
-// 点击空白关闭选择器
+// 点击空白区域关闭弹窗
 const handleClickOutside = (e) => {
   if (!e.target.closest('.form-box')) {
     activeField.value = null
@@ -127,7 +144,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('click', handleClickOutside)
 })
 </script>
-
 
 <style scoped>
 .flat-search-bar {
@@ -148,22 +164,21 @@ onBeforeUnmount(() => {
   font-size: 15px;
   color: #333;
 }
-.trip-options input[type="radio"] {
+
+.trip-options input[type='radio'] {
   margin-right: 6px;
   accent-color: #1677ff;
 }
 
 .form-row {
   display: flex;
-  flex-wrap: nowrap;         /* ✅ 保持一行 */
   gap: 16px;
   align-items: flex-end;
-  overflow-x: visible;       /* ✅ 去除滚动条 */
 }
 
 .form-box {
   position: relative;
-  width: 160px;  /* ✅ 缩小宽度以容纳更多 */
+  width: 160px;
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 12px;
@@ -171,24 +186,17 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: border 0.2s;
   z-index: 1;
-  flex-shrink: 0; /* 防止压扁 */
-}
-
-.form-box {
-  flex: 1 1 0;                /* ✅ 自动拉伸 */
+  flex-shrink: 0;
+  flex: 1 1 0;
   min-width: 120px;
   max-width: 200px;
-}
-
-.swap-btn,
-.search-btn {
-  flex-shrink: 0;
 }
 
 .form-box:hover {
   border-color: #1677ff;
 }
-.form-box input[type="date"] {
+
+.form-box input[type='date'] {
   border: none;
   background: transparent;
   font-size: 15px;
@@ -197,10 +205,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
   font-family: inherit;
 }
+
 .form-box .label {
   font-size: 12px;
   color: #888;
 }
+
 .form-box .value {
   margin-top: 4px;
   font-size: 16px;
@@ -225,6 +235,7 @@ onBeforeUnmount(() => {
   transition: background 0.3s;
   flex-shrink: 0;
 }
+
 .swap-btn:hover {
   background: #125edd;
 }
@@ -241,14 +252,18 @@ onBeforeUnmount(() => {
   font-family: inherit;
   flex-shrink: 0;
 }
+
 .search-btn:hover {
   background: #125edd;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.2s ease;
 }
-.fade-enter-from, .fade-leave-to {
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>

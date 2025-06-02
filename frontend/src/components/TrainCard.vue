@@ -1,3 +1,4 @@
+<!-- 文件：src/components/TrainCard.vue -->
 <template>
   <div class="train-card">
     <!-- 左侧基本信息 -->
@@ -30,6 +31,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+
 const props = defineProps({
   train: Object
 })
@@ -54,7 +56,8 @@ const goToBooking = () => {
       to: props.train.arriveStation,
       departTime: props.train.departTime,
       arriveTime: props.train.arriveTime,
-      seat: props.train.seat
+      seat: props.train.seat,
+      price: props.train.price || 200
     }
   })
 }

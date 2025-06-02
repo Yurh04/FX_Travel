@@ -1,3 +1,4 @@
+<!-- 文件：src/pages/auth-page.vue -->
 <template>
   <div class="auth-page">
     <div class="container">
@@ -10,16 +11,28 @@
       <div class="auth-card">
         <!-- 顶部选项卡 -->
         <div class="tab-switch">
-          <button :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">登录</button>
-          <button :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">注册</button>
-          <button :class="{ active: activeTab === 'forget' }" @click="activeTab = 'forget'">忘记密码</button>
+          <button
+              :class="{ active: activeTab === 'login' }"
+              @click="activeTab = 'login'"
+          >登录</button>
+          <button
+              :class="{ active: activeTab === 'register' }"
+              @click="activeTab = 'register'"
+          >注册</button>
+          <button
+              :class="{ active: activeTab === 'forget' }"
+              @click="activeTab = 'forget'"
+          >忘记密码</button>
         </div>
 
         <!-- 表单组件 -->
         <AuthForm :type="activeTab" @success="handleSuccess" />
 
         <!-- 成功提示 -->
-        <p v-if="message && !message.includes('失败')" class="message">{{ message }}</p>
+        <p
+            v-if="message && !message.includes('失败')"
+            class="message"
+        >{{ message }}</p>
       </div>
     </div>
   </div>
@@ -36,8 +49,14 @@ const router = useRouter()
 
 const handleSuccess = (msg) => {
   message.value = msg
-  if (msg.includes('登录成功')) router.push('/train')
-  if (msg.includes('注册成功') || msg.includes('重置')) activeTab.value = 'login'
+  // 登录成功后跳到火车首页（命名路由为 "train"）
+  if (msg.includes('登录成功')) {
+    router.push({ name: 'train' })
+  }
+  // 注册成功或重置密码成功后，切回登录页
+  if (msg.includes('注册成功') || msg.includes('重置')) {
+    activeTab.value = 'login'
+  }
 }
 </script>
 
