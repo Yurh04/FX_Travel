@@ -1,3 +1,4 @@
+// 文件：src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import TrainBooking from '../pages/TrainBooking.vue'
 import OrderHistory from '../pages/OrderHistory.vue'
@@ -9,21 +10,63 @@ import HotelDetail from '../pages/HotelDetail.vue'
 import BookingForm from '../pages/BookingForm.vue'
 import TrainSearchResult from '../pages/TrainSearchResult.vue'
 import AuthPage from '../pages/auth-page.vue'
+import BookingSuccess from '../pages/BookingSuccess.vue'
 
 
 
 const routes = [
-    { path: '/', name: 'HotelHome', component: HotelHome },
-    { path: '/search', name: 'HotelSearch', component: HotelSearch },
-    { path: '/hotels/:id', name: 'HotelDetail', component: HotelDetail, props: true },
+    // 首页不需要登录
+    { path: '/',                    name: 'HotelHome',       component: HotelHome },
+    { path: '/search',              name: 'HotelSearch',     component: HotelSearch },
+    { path: '/hotels/:id',          name: 'HotelDetail',     component: HotelDetail,   props: true },
     { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
-    { path: '/train', name: 'train', component: TrainHome },
-    { path: '/booking', name: 'TrainBooking', component: TrainBooking },
-    { path: '/orders', name: 'OrderHistory', component: OrderHistory },
-    { path: '/meal', name: 'TrainMeal', component: TrainMeal },
-    { path: '/train-result', name: 'trainResult', component: TrainSearchResult, props: true },
-    { path: '/auth',name:"Authentication", component: AuthPage },
 
+    // 火车模块，需要登录才能访问
+    {
+        path: '/train',
+        name: 'train',
+        component: TrainHome,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/booking',
+        name: 'TrainBooking',
+        component: TrainBooking,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/orders',
+        name: 'OrderHistory',
+        component: OrderHistory,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/meal',
+        name: 'TrainMeal',
+        component: TrainMeal,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/train-result',
+        name: 'trainResult',
+        component: TrainSearchResult,
+        props: true,
+        meta: { requiresAuth: true }
+    },
+
+    {
+        path: '/booking-success',
+        name: 'BookingSuccess',
+        component: BookingSuccess,
+        meta: { requiresAuth: true }
+    },
+
+    // 登录/注册/忘记密码，不需要鉴权
+    {
+        path: '/auth',
+        name: 'Authentication',
+        component: AuthPage
+    },
 ]
 
 const router = createRouter({
@@ -31,4 +74,4 @@ const router = createRouter({
     routes
 })
 
-export default router;
+export default router
