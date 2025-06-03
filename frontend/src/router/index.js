@@ -11,7 +11,7 @@ import BookingForm from '../pages/BookingForm.vue'
 import TrainSearchResult from '../pages/TrainSearchResult.vue'
 import AuthPage from '../pages/auth-page.vue'
 import BookingSuccess from '../pages/BookingSuccess.vue'
-
+import AboutUs from "../pages/AboutUs.vue"
 
 
 const routes = [
@@ -20,6 +20,7 @@ const routes = [
     { path: '/search',              name: 'HotelSearch',     component: HotelSearch },
     { path: '/hotels/:id',          name: 'HotelDetail',     component: HotelDetail,   props: true },
     { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
+    { path: '/aboutUs', name: "aboutUs", component: AboutUs, props: true},
 
     // 火车模块，需要登录才能访问
     {

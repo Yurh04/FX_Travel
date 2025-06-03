@@ -42,6 +42,7 @@
           </template>
 
           <button class="nav-btn" @click="go('/contact')">联系客服</button>
+          <button class="nav-btn" @click="go('/aboutUs')">关于我们</button>
         </div>
       </header>
 
