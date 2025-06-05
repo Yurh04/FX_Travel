@@ -1,91 +1,120 @@
 <template>
-  <div class="order-page">
-    <h2>我的历史订单</h2>
+  <div class="order-history">
+    <h2>🧾 我的历史订单</h2>
 
-    <div v-if="orders.length === 0" class="empty">暂无订单记录</div>
+    <!-- 🔍 筛选工具条 -->
+    <div class="filters">
+      <input v-model="keyword" placeholder="搜索车次/站点/餐品" />
+      <el-date-picker v-model="dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" />
+      <select v-model="selectedStatus">
+        <option value="">全部状态</option>
+        <option value="COMPLETED">已完成</option>
+        <option value="CANCELLED">已取消</option>
+        <option value="PENDING">处理中</option>
+      </select>
+      <button @click="fetchOrders">查询</button>
+    </div>
 
-    <div v-for="order in orders" :key="order.orderId" class="order-card">
-      <div class="info">
-        <p><strong>订单号：</strong>{{ order.orderId }}</p>
-        <p><strong>车次：</strong>{{ order.trainId }}（{{ order.from }} → {{ order.to }}）</p>
-        <p><strong>出发时间：</strong>{{ order.departureTime }}</p>
-        <p><strong>座位类型：</strong>{{ order.seatType }}</p>
-        <p><strong>状态：</strong>{{ order.status }}</p>
-      </div>
+    <div v-if="loading" class="loading">订单加载中...</div>
+    <div v-else-if="filteredTickets.length === 0 && filteredMeals.length === 0" class="empty">暂无订单记录</div>
 
-      <button v-if="order.status !== '已取消'" @click="cancelOrder(order.orderId)">
-        取消订单
-      </button>
+    <!-- 🎫 车票订单 -->
+    <div v-if="filteredTickets.length" class="section">
+      <h3>车票订单</h3>
+      <ul class="order-list">
+        <li v-for="order in filteredTickets" :key="order.id" class="order-card">
+          <div class="info">
+            <p><strong>车次：</strong>{{ order.train.trainNumber }}</p>
+            <p><strong>出发：</strong>{{ order.train.fromStation }}</p>
+            <p><strong>到达：</strong>{{ order.train.toStation }}</p>
+            <p><strong>出发时间：</strong>{{ formatTime(order.train.departureTime) }}</p>
+            <p><strong>状态：</strong>{{ formatStatus(order.status) }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 🍱 订餐订单 -->
+    <div v-if="filteredMeals.length" class="section">
+      <h3>订餐订单</h3>
+      <ul class="order-list">
+        <li v-for="meal in filteredMeals" :key="meal.id" class="order-card">
+          <div class="info">
+            <p><strong>车次：</strong>{{ meal.trainNumber }}</p>
+            <p><strong>餐品：</strong>{{ meal.items?.join(', ') }}</p>
+            <p><strong>金额：</strong>￥{{ meal.total }}</p>
+            <p><strong>状态：</strong>{{ formatStatus(meal.status) }}</p>
+          </div>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '../store/user'
 
-const orders = ref([])
+const userStore = useUserStore()
+const router = useRouter()
+userStore.restoreSession()
 
-const user = JSON.parse(localStorage.getItem('user') || '{}')
+const userId = userStore.userInfo?.id
 
-const getOrders = async () => {
-  if (!user.username) {
-    alert('请先登录')
-    return
+const ticketOrders = ref([])
+const mealOrders = ref([])
+const loading = ref(false)
+
+const keyword = ref('')
+const selectedStatus = ref('')
+const dateRange = ref([])
+
+const formatTime = (dt) => new Date(dt).toLocaleString()
+const formatStatus = (s) => ({
+  COMPLETED: '已完成',
+  CANCELLED: '已取消',
+  PENDING: '处理中',
+  IDLE: '未开始'
+}[s] || s)
+
+const fetchOrders = async () => {
+  if (!userId) {
+    ElMessage.warning('请先登录后查看订单')
+    return router.push('/login')
   }
-
-  const res = await axios.get('http://localhost:8080/api/v1/train/order/history', {
-    params: { userId: user.username } // 示例用用户名，实际用 userId
-  })
-  orders.value = res.data
+  loading.value = true
+  try {
+    const [ticketRes, mealRes] = await Promise.all([
+      fetch(`/api/user/orders?userId=${userId}`).then(r => r.json()),
+      fetch(`/api/user/meal-orders?userId=${userId}`).then(r => r.json())
+    ])
+    ticketOrders.value = ticketRes || []
+    mealOrders.value = mealRes || []
+  } catch (e) {
+    ElMessage.error('订单加载失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-const cancelOrder = async (orderId) => {
-  const res = await axios.post('http://localhost:8080/api/v1/train/order/cancel', {
-    orderId
-  })
-  alert(res.data.message || '取消成功')
-  getOrders()
-}
+onMounted(fetchOrders)
 
-onMounted(() => {
-  getOrders()
+const filteredTickets = computed(() => {
+  return ticketOrders.value.filter(o => {
+    const matchKeyword = keyword.value === '' || `${o.train.trainNumber} ${o.train.fromStation} ${o.train.toStation}`.includes(keyword.value)
+    const matchStatus = !selectedStatus.value || o.status === selectedStatus.value
+    const matchDate = !dateRange.value.length || (new Date(o.train.departureTime) >= new Date(dateRange.value[0]) && new Date(o.train.departureTime) <= new Date(dateRange.value[1]))
+    return matchKeyword && matchStatus && matchDate
+  })
+})
+
+const filteredMeals = computed(() => {
+  return mealOrders.value.filter(m => {
+    const matchKeyword = keyword.value === '' || `${m.trainNumber} ${m.items?.join(',')}`.includes(keyword.value)
+    const matchStatus = !selectedStatus.value || m.status === selectedStatus.value
+    return matchKeyword && matchStatus
+  })
 })
 </script>
-
-<style scoped>
-.order-page {
-  max-width: 800px;
-  margin: auto;
-  padding: 24px;
-}
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-.order-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  padding: 16px;
-  margin-bottom: 20px;
-}
-.order-card .info p {
-  margin: 6px 0;
-}
-.order-card button {
-  margin-top: 10px;
-  background: #f56c6c;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.empty {
-  color: #999;
-  text-align: center;
-  margin-top: 40px;
-}
-</style>
-

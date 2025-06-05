@@ -2,6 +2,17 @@
   <router-view />
 </template>
 
+<script setup>
+// App.vue
+import { onMounted } from 'vue'
+import { useUserStore } from './store/user.js'
+
+onMounted(() => {
+  useUserStore().restoreSession()
+})
+
+</script>
+
 <style scoped>
 nav {
   display: flex;

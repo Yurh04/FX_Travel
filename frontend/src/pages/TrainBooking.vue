@@ -1,216 +1,122 @@
+<!-- 文件：src/pages/TrainBooking.vue -->
 <template>
   <div class="booking-page">
+    <div class="booking-card">
+      <h2>确认预订</h2>
 
-    <!-- 🔍 查询区域 -->
-    <div class="search-box">
-      <h3>查询火车票</h3>
-      <div class="form">
-        <input v-model="from" placeholder="出发地" />
-        <input v-model="to" placeholder="目的地" />
-        <input type="date" v-model="date" />
-        <select v-model="sort">
-          <option value="">默认排序</option>
-          <option value="duration">按旅途时长</option>
-          <option value="departureTime">按出发时间</option>
-        </select>
-        <button @click="searchTrains">查询</button>
+      <!-- 车次信息展示 -->
+      <div class="info">
+        <p><strong>车次：</strong>{{ trainId }}</p>
+        <p><strong>出发城市：</strong>{{ from }}</p>
+        <p><strong>到达城市：</strong>{{ to }}</p>
+        <p><strong>出发时间：</strong>{{ departTime }}</p>
+        <p><strong>到达时间：</strong>{{ arriveTime }}</p>
+        <p><strong>座席：</strong>{{ seat }}</p>
+        <p><strong>票价：</strong>{{ price }} 元</p>
+      </div>
+
+      <hr />
+
+      <!-- 支付模块 -->
+      <div class="payment-section">
+        <p class="total-amount">应付金额：<span>{{ price }} 元</span></p>
+        <button class="pay-btn" @click="processPayment">立即支付</button>
       </div>
     </div>
-
-    <!-- 🚆 车次列表展示 -->
-    <div class="train-list" v-if="sortedTrains.length > 0">
-      <div class="train-card" v-for="train in sortedTrains" :key="train.trainId">
-        <div class="train-info">
-          <div class="train-number">{{ train.trainId }}</div>
-          <div class="time-info">
-            <span>{{ train.departureTime }}</span>
-            <span class="arrow">→</span>
-            <span>{{ train.arrivalTime }}</span>
-          </div>
-          <div class="duration">历时：{{ train.duration }}</div>
-        </div>
-
-        <!-- 座位列表 -->
-        <div class="seat-types">
-          <div class="seat" v-for="seat in train.types" :key="seat.seatType">
-            <p>{{ seat.seatType }}：￥{{ seat.price }} ｜ 余票：{{ seat.available }}</p>
-            <button :disabled="seat.available === 0" @click="placeOrder(train, seat)">
-              下单
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="no-result">暂无查询结果，请重新选择条件</div>
-
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import axios from 'axios'
-
-const from = ref('')
-const to = ref('')
-const date = ref('')
-const sort = ref('')
-const trains = ref([])
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
 
-onMounted(() => {
-  from.value = route.query.from || ''
-  to.value = route.query.to || ''
-  date.value = route.query.date || ''
+const trainId = ref(route.query.trainId || '未知')
+const from = ref(route.query.from || '未知')
+const to = ref(route.query.to || '未知')
+const departTime = ref(route.query.departTime || '--:--')
+const arriveTime = ref(route.query.arriveTime || '--:--')
+const seat = ref(route.query.seat || '无座')
+const price = ref(route.query.price || 200)
 
-  if (from.value && to.value && date.value) {
-    searchTrains()
-  }
-})
-
-const searchTrains = async () => {
-  const res = await axios.get('http://localhost:8080/api/v1/train/search', {
-    params: { from: from.value, to: to.value, date: date.value }
-  })
-  trains.value = res.data
-}
-
-const sortedTrains = computed(() => {
-  let result = [...trains.value]
-  if (sort.value === 'duration') {
-    result.sort((a, b) => a.totalDuration - b.totalDuration)
-  } else if (sort.value === 'departureTime') {
-    result.sort((a, b) => new Date(a.departureTime) - new Date(b.departureTime))
-  }
-  return result
-})
-
-const placeOrder = async (train, seat) => {
-  const res = await axios.post('http://localhost:8080/api/v1/train/order', {
-    userId: 'u001',
-    trainId: train.trainId,
-    seatTypeId: seat.seatType,
-    passengerName: '张三',
-    idNumber: '123456199901010011',
-    phone: '13800000000'
-  })
-  alert(res.data.message)
+const processPayment = () => {
+  ElMessage.success('支付成功！')
+  setTimeout(() => {
+    router.push({ name: 'BookingSuccess' })
+  }, 1200)
 }
 </script>
 
 <style scoped>
 .booking-page {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-}
-
-.search-box {
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
-}
-
-.search-box h3 {
-  margin-bottom: 12px;
-  color: #2b8cff;
-}
-
-.form {
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  background: linear-gradient(to right, #e6f0ff, #f9fbff);
+  font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 
-.form input,
-.form select {
-  flex: 1;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-
-.form button {
-  background: #2b8cff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.train-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.train-card {
+.booking-card {
   background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 32px 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 380px;
+  text-align: left;
 }
 
-.train-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px dashed #eee;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-}
-
-.train-number {
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.time-info {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.arrow {
-  font-weight: bold;
-}
-
-.duration {
-  font-size: 14px;
-  color: #666;
-}
-
-.seat-types {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.seat {
-  background: #f5f7fa;
-  padding: 8px 12px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.seat button {
-  background: #409eff;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.no-result {
+.booking-card h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
   text-align: center;
-  color: #999;
-  margin-top: 40px;
+}
+
+.info p {
+  font-size: 15px;
+  color: #555;
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+hr {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+}
+
+.payment-section {
+  text-align: center;
+}
+
+.total-amount {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.total-amount span {
+  font-weight: bold;
+  color: #1677ff;
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 16px;
+  background: linear-gradient(to right, #409eff, #66b1ff);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.pay-btn:hover {
+  background: linear-gradient(to right, #3a8ee6, #5caceb);
 }
 </style>
