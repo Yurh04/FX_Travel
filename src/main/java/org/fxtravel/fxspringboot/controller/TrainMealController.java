@@ -1,16 +1,21 @@
 package org.fxtravel.fxspringboot.controller;
 
+import jakarta.servlet.http.HttpSession;
+import org.fxtravel.fxspringboot.common.Role;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealDTO;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealQueryDTO;
+import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 import org.fxtravel.fxspringboot.service.inter.TrainMealService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -26,7 +31,12 @@ public class TrainMealController {
      * @return 餐食列表
      */
     @GetMapping("/train_meal")
-    public ResponseEntity<List<train_meal>> getUserMealsByTrain(@RequestParam Integer trainId) {
+    public ResponseEntity<List<train_meal>> getUserMealsByTrain(@RequestParam Integer trainId, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<train_meal> meals = trainMealService.getMealsByTrain4User(trainId);
         return ResponseEntity.ok(meals);
     }
@@ -37,7 +47,12 @@ public class TrainMealController {
      * @return 符合条件的餐食列表
      */
     @PostMapping("/train_meal/query")
-    public ResponseEntity<List<train_meal>> getUserMealsByConditions(@RequestBody TrainMealQueryDTO queryDTO) {
+    public ResponseEntity<List<train_meal>> getUserMealsByConditions(@RequestBody TrainMealQueryDTO queryDTO, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<train_meal> meals = trainMealService.getMealsByConditions4User(queryDTO);
         return ResponseEntity.ok(meals);
     }
