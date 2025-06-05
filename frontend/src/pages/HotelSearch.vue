@@ -3,248 +3,575 @@
     <!-- 侧边栏 -->
     <aside class="sidebar">
       <ul>
-        <li @click="goHotelHome">
+        <li :class="{ active: currentMenu === 'hotel' }" @click="goHome">
           <i class="iconfont">&#xe6b6;</i>酒店
         </li>
-        <li @click="goTrainHome">
+        <li :class="{ active: currentMenu === 'train' }" @click="goTrain">
           <i class="iconfont">&#xe608;</i>火车票
         </li>
       </ul>
     </aside>
 
-    <!-- 主内容区域 -->
+    <!-- 右侧内容区 -->
     <div class="content-wrapper">
       <!-- 顶部导航栏 -->
       <header class="top-nav">
-        <div class="logo-container" @click.stop="goHotelHome">
-          <img class="logo" src="/images/ICON.png" alt="风行旅行">
+        <div class="logo-section" @click="goHome">
+          <img class="logo" src="/images/ICON.png" alt="风行旅行" />
           <span class="site-name">风行旅行</span>
         </div>
         <nav class="nav-links">
-          <a @click.prevent="goLogin">登录</a>
-          <a @click.prevent="goRegister">注册</a>
-          <a @click.prevent="goOrders">我的订单</a>
-          <a @click.prevent="goAbout">关于我们</a>
+          <template v-if="!isLoggedIn">
+            <a href="#" @click.prevent="go('/auth')">登录/注册</a>
+          </template>
+          <template v-else>
+            <div class="user-info">
+              <img :src="avatarUrl" class="avatar" />
+              <span class="nickname">{{ username }}</span>
+              <div class="dropdown">
+                <a href="#" @click.prevent="go('/orders')">我的订单</a>
+                <a href="#" @click.prevent="logout">退出登录</a>
+              </div>
+            </div>
+          </template>
+          <a href="#" @click.prevent="go('/messages')" class="message-link">消息中心</a>
+          <a href="#" @click.prevent="go('/aboutUs')">关于我们</a>
         </nav>
       </header>
 
-      <!-- 主体内容与筛选并排 -->
+      <!-- 主体内容 -->
       <div class="content-body">
-        <!-- 高级搜索筛选区域 -->
-        <aside class="filter-panel">
-          <h3>筛选</h3>
-          <el-form label-position="top" class="filter-form">
-            <el-form-item label="入住 - 离店">
-              <el-date-picker
-                v-model="filters.dateRange"
-                type="daterange"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                format="YYYY-MM-DD"
-                unlink-panels
-              />
-            </el-form-item>
-            <el-form-item label="价格 (元)">
-              <el-slider
-                v-model="filters.price"
-                range
-                :min="0"
-                :max="2000"
-              />
-              <div class="price-value">{{ filters.price[0] }} - {{ filters.price[1] }}</div>
-            </el-form-item>
-            <el-form-item label="星级">
-              <el-checkbox-group v-model="filters.stars">
-                <el-checkbox v-for="s in [5,4,3,2,1]" :key="s" :label="s">{{ s }}星</el-checkbox>
-              </el-checkbox-group>
-            </el-form-item>
-            <el-form-item label="设施">
-              <el-checkbox-group v-model="filters.amenities">
-                <el-checkbox label="免费WiFi">免费WiFi</el-checkbox>
-                <el-checkbox label="游泳池">游泳池</el-checkbox>
-                <el-checkbox label="健身房">健身房</el-checkbox>
-                <el-checkbox label="停车场">停车场</el-checkbox>
-              </el-checkbox-group>
-            </el-form-item>
-            <el-button type="primary" @click="applyFilters">应用筛选</el-button>
-          </el-form>
-        </aside>
+        <main class="main-content">
+          <h2 class="page-title">酒店搜索</h2>
 
-        <!-- 酒店列表区域 -->
-        <section class="hotel-list">
-          <el-row :gutter="20">
-            <el-col :span="8" v-for="hotel in filteredList" :key="hotel.id">
-              <el-card class="hotel-card" shadow="hover" @click.native="goDetail(hotel.id)">
-                <img :src="hotel.img" class="card-img" />
-                <div class="card-body">
-                  <h4 class="hotel-name">{{ hotel.name }}</h4>
+          <!-- 搜索 + 高级排序 -->
+          <el-card class="search-card" shadow="hover">
+            <el-form :inline="true" @submit.native.prevent="onSearch">
+              <el-form-item label="目的地/酒店">
+                <el-input
+                  v-model="params.destination"
+                  placeholder="请输入城市或酒店名"
+                />
+              </el-form-item>
+
+              <el-form-item label="入住">
+                <el-date-picker
+                  v-model="params.checkInDate"
+                  type="date"
+                  placeholder="选择日期"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                />
+              </el-form-item>
+
+              <el-form-item label="退房">
+                <el-date-picker
+                  v-model="params.checkOutDate"
+                  type="date"
+                  placeholder="选择日期"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                />
+              </el-form-item>
+
+              <el-form-item label="排序">
+                <el-select v-model="sortOption" placeholder="请选择排序">
+                  <el-option label="价格 从低到高" value="price_asc" />
+                  <el-option label="价格 从高到低" value="price_desc" />
+                  <el-option label="评分 从高到低" value="rating_desc" />
+                  <el-option label="评分 从低到高" value="rating_asc" />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item>
+                <el-button type="primary" @click="onSearch">搜索</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+
+          <!-- 搜索结果列表 -->
+          <div v-if="hotels.length > 0" class="results">
+            <el-row :gutter="20">
+              <el-col
+                v-for="hotel in sortedHotels"
+                :key="hotel.hotelId"
+                :xs="24"
+                :sm="12"
+                :md="8"
+                :lg="6"
+              >
+                <el-card
+                  class="hotel-card"
+                  shadow="hover"
+                  @click="goDetail(hotel.hotelId)"
+                >
+                  <img :src="hotel.img || defaultImg" class="hotel-thumb" />
                   <div class="hotel-info">
-                    <span class="stars">{{ hotel.stars }}星</span>
-                    <span class="price">￥{{ hotel.price }} 起</span>
+                    <h3 class="hotel-name">{{ hotel.name }}</h3>
+                    <div class="hotel-destination">
+                      {{ hotel.destination }}
+                    </div>
+                    <div class="hotel-rating">
+                      <i
+                        v-for="n in Math.round(hotel.rating)"
+                        :key="n"
+                        class="iconfont"
+                        >&#xe60a;</i
+                      >
+                      <span>{{ hotel.rating.toFixed(1) }} 星</span>
+                    </div>
+                    <div class="hotel-price">￥{{ hotel.pricePerNight }} 起</div>
                   </div>
-                </div>
-              </el-card>
-            </el-col>
-          </el-row>
-          <el-pagination
-            background
-            layout="prev, pager, next"
-            :total="total"
-            :page-size="pageSize"
-            v-model:current-page="currentPage"
-            @current-change="fetchList"
-            class="pagination"
-          />
-        </section>
+                </el-card>
+              </el-col>
+            </el-row>
+          </div>
+          <div v-else class="no-results">
+            <p>未找到符合条件的酒店</p>
+          </div>
+        </main>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { advancedSearch } from '../api/hotel' // 使用高级搜索接口
+import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
 
-const router = useRouter()
-const goHotelHome = () => router.push({ name: 'HotelHome' })
-const goTrainHome = () => router.push({ name: 'HomePage' })
-const goLogin = () => router.push({ name: 'LoginPage' })
-const goRegister = () => router.push({ name: 'LoginPage', query: { mode: 'register' } })
-const goOrders = () => router.push({ name: 'OrderHistory' })
-const goAbout = () => router.push({ path: '/about' })
+// 用户状态管理
+const username = ref('未登录')
+const isLoggedIn = ref(false)
+const avatarUrl = ref('../assets/default-avatar.png')
 
-const filters = ref({ dateRange: [], price: [0,2000], stars: [], amenities: [] })
-const list = ref([])
-const total = ref(0)
-const pageSize = 9
-const currentPage = ref(1)
-
-const fetchList = (page = 1) => {
-  currentPage.value = page
-  // Todo: 接口调用
+const logout = () => {
+  localStorage.removeItem('username')
+  localStorage.removeItem('avatar')
+  isLoggedIn.value = false
+  username.value = '未登录'
+  avatarUrl.value = '/images/default-avatar.png'
+  ElMessage.success('已退出登录')
+  router.push('/auth')
 }
 
-onMounted(() => fetchList())
-const applyFilters = () => fetchList(1)
-const filteredList = computed(() => list.value)
-const goDetail = id => router.push({ name: 'HotelDetail', params: { id } })
+onMounted(() => {
+  const name = localStorage.getItem('username')
+  const avatar = localStorage.getItem('avatar')
+  if (name) {
+    username.value = name
+    isLoggedIn.value = true
+    avatarUrl.value = avatar || '/images/default-avatar.png'
+  }
+  loadHotels()
+})
+
+const router = useRouter()
+const route = useRoute()
+
+// 当前菜单高亮
+const currentMenu = ref('hotel')
+function go(path) {
+  router.push(path)
+}
+function goHome() {
+  currentMenu.value = 'hotel'
+  router.push({ name: 'HotelHome' })
+}
+function goTrain() {
+  currentMenu.value = 'train'
+  router.push({ name: 'train' })
+}
+function goMessages() {
+  currentMenu.value = 'messages'
+  router.push({ name: 'MessageCenter' })
+}
+
+// 未读消息数量（可选，如果你的项目里有消息逻辑，就写一段 fetchUnreads()）
+const unreadCount = ref(0)
+
+// 搜索参数
+const params = ref({
+  destination: route.query.destination || '',
+  checkInDate: route.query.checkInDate || dayjs().format('YYYY-MM-DD'),
+  checkOutDate:
+    route.query.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
+})
+
+// 排序选项
+const sortOption = ref('') // '', 'price_asc', 'price_desc', 'rating_asc', 'rating_desc'
+
+// 酒店列表
+const hotels = ref([])
+const defaultImg = '/images/default-hotel.jpg'
+
+// 监听 URL query 变化
+watch(
+  () => route.query,
+  () => {
+    params.value.destination = route.query.destination || ''
+    params.value.checkInDate =
+      route.query.checkInDate || dayjs().format('YYYY-MM-DD')
+    params.value.checkOutDate =
+      route.query.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
+    loadHotels()
+  }
+)
+
+// 初次加载
+onMounted(loadHotels)
+
+// 调用后端的 高级搜索（带排序）接口
+async function loadHotels() {
+  // 如果任一参数为空则不请求
+  if (
+    !params.value.destination ||
+    !params.value.checkInDate ||
+    !params.value.checkOutDate
+  ) {
+    hotels.value = []
+    return
+  }
+  try {
+    // 构造给后端的 filters 对象
+    const filters = {
+      destination: params.value.destination,
+      checkInDate: params.value.checkInDate,
+      checkOutDate: params.value.checkOutDate
+    }
+    // 根据 sortOption 添加排序字段
+    if (sortOption.value === 'price_asc') {
+      filters.sortBy = 'price'
+      filters.sortOrder = 'asc'
+    } else if (sortOption.value === 'price_desc') {
+      filters.sortBy = 'price'
+      filters.sortOrder = 'desc'
+    } else if (sortOption.value === 'rating_asc') {
+      filters.sortBy = 'rating'
+      filters.sortOrder = 'asc'
+    } else if (sortOption.value === 'rating_desc') {
+      filters.sortBy = 'rating'
+      filters.sortOrder = 'desc'
+    }
+    // 调用后端高级搜索接口
+    const response = await advancedSearch(filters)
+    // 后端返回 should be: response.data = Array<Hotel>
+    hotels.value = response.data || []
+  } catch (err) {
+    console.error('高级搜索酒店失败：', err)
+    hotels.value = []
+  }
+}
+
+// 根据排序选项返回排序后的列表（如果后端已排序可直接用 hotels.value）
+const sortedHotels = computed(() => {
+  // 假设后端 /api/hotels/search 已经做了排序，这里可以直接 return hotels.value
+  // 如果想前端二次排序，可把下面改成手动排序逻辑
+  return hotels.value
+})
+
+// 点击“搜索”时，只更新 URL query，触发 loadHotels()
+function onSearch() {
+  router.replace({
+    name: 'HotelSearch',
+    query: {
+      destination: params.value.destination,
+      checkInDate: params.value.checkInDate,
+      checkOutDate: params.value.checkOutDate
+      // sortOption 不放到 query 中，排序由 loadHotels() 读取
+    }
+  })
+}
+
+// 点击进入某个酒店详情
+function goDetail(hotelId) {
+  router.push({ name: 'HotelDetail', params: { id: hotelId } })
+}
 </script>
 
 <style scoped>
-/* 基础布局 */
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Montserrat:wght@400;600&display=swap');
+@import url('//at.alicdn.com/t/font_2738890_1x2k9b0b1c6.css');
+
 .hotel-app {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  background: #f5f7fa;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
-/* 侧边栏固定 */
+
+/* 侧边栏 */
 .sidebar {
-  position: fixed;
-  top: 0;
-  bottom: 0;
   width: 160px;
   background: #fff;
   border-right: 1px solid #ececec;
   padding-top: 20px;
 }
-.sidebar ul { list-style: none; margin: 0; padding: 0; }
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 .sidebar li {
   display: flex;
   align-items: center;
-  padding: 14px 20px;
+  padding: 14px 26px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #222;
+  border-radius: 5px 0 0 5px;
   cursor: pointer;
-  transition: background 0.2s;
+  position: relative;
+  transition: background 0.2s, transform 0.2s;
 }
-.sidebar li:hover { background: #f0f4ff; }
+.sidebar li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: #1677ff;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+.sidebar li:hover::after,
+.sidebar li.active::after {
+  transform: translateX(0);
+}
+.sidebar li.active,
+.sidebar li:hover {
+  background: #e6f6ff;
+  color: #1677ff;
+}
+.sidebar .iconfont {
+  font-size: 20px;
+  margin-right: 12px;
+}
+/* 侧边栏小红点 */
+.red-dot {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  background-color: #f56c6c;
+  border-radius: 50%;
+}
 
-/* 主内容区域 */
+/* 右侧内容区 */
 .content-wrapper {
-  margin-left: 160px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  width: calc(100% - 160px);
-  height: 100%;
 }
 
-/* 顶部导航固定 */
+/* 顶部导航 */
 .top-nav {
-  position: fixed;
-  top: 0;
-  left: 160px;
-  right: 0;
-  height: 60px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #fff;
   padding: 0 24px;
+  height: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
-.logo-container {
+.logo-section {
   display: flex;
   align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.logo-section:hover {
+  transform: scale(1.05);
 }
 .logo {
   height: 40px;
+  width: auto;
 }
 .site-name {
-  margin-left: 8px;
+  margin-left: 10px;
   font-family: 'Pacifico', cursive;
-  font-size: 24px;
+  font-size: 26px;
   color: #1677ff;
+  transition: color 0.2s;
+}
+.logo-region:hover .site-name {
+  color: #145ecb;
 }
 .nav-links a {
   margin-left: 24px;
   color: #333;
   font-weight: 500;
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 5px;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #1677ff;
+  transition: width 0.3s ease;
+}
+.nav-links a:hover::after {
+  width: 100%;
+}
+.nav-links a:hover {
+  color: #1677ff;
 }
 .nav-links a:hover { color: #1677ff; }
 
-/* 主体内容与筛选 */
-.content-body {
+/* 用户信息样式 */
+.user-info {
+  position: relative;
   display: flex;
-  margin-top: 60px;
-  height: calc(100% - 60px);
-  overflow: hidden;
+  align-items: center;
+  margin-left: 24px;
+  cursor: pointer;
 }
-.filter-panel {
-  width: 240px;
-  background: #fff;
-  padding: 20px;
-  border-right: 1px solid #ececec;
-  overflow-y: auto;
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 8px;
 }
-.filter-panel h3 {
-  margin-bottom: 16px;
-  font-size: 18px;
+.nickname {
+  font-size: 14px;
   color: #333;
 }
-.filter-form .el-form-item { margin-bottom: 16px; }
-.price-value { margin-top: 8px; color: #1677ff; }
-
-/* 列表区域 */
-.hotel-list {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background: #f5f7fa;
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 8px 0;
+  min-width: 120px;
+  display: none;
+  z-index: 10;
 }
+.user-info:hover .dropdown {
+  display: block;
+}
+.dropdown a {
+  display: block;
+  padding: 8px 16px;
+  color: #333;
+  text-decoration: none;
+}
+.dropdown a:hover {
+  background: #f5f7fa;
+  color: #1677ff;
+}
+
+/* 顶部小红点 */
+.red-dot-sm {
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  width: 6px;
+  height: 6px;
+  background-color: #f56c6c;
+  border-radius: 50%;
+}
+
+/* 主体区域 */
+.content-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.main-content {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+}
+
+/* 页标题 */
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+/* 搜索 + 排序 卡片 */
+.search-card {
+  margin-bottom: 20px;
+}
+.search-card .el-form-item {
+  margin-right: 12px;
+}
+
+/* 搜索结果 */
 .hotel-card {
   cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
+  transition: box-shadow 0.2s;
 }
-.card-img {
+.hotel-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.hotel-thumb {
   width: 100%;
   height: 160px;
   object-fit: cover;
 }
-.card-body { padding: 12px; }
-.hotel-name { font-size: 16px; margin-bottom: 8px; }
-.hotel-info { display: flex; justify-content: space-between; }
-.price { color: #e91e63; font-weight: bold; }
+.hotel-info {
+  padding: 12px;
+}
+.hotel-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #333;
+}
+.hotel-destination {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+.hotel-rating {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #fbbf24;
+  margin-bottom: 8px;
+}
+.hotel-rating .iconfont {
+  margin-right: 4px;
+}
+.hotel-price {
+  font-size: 16px;
+  color: #e91e63;
+  font-weight: 700;
+}
 
-/* 分页居中 */
-.pagination { text-align: center; margin-top: 20px; }
+/* 无结果提示 */
+.no-results {
+  text-align: center;
+  color: #999;
+  margin-top: 40px;
+  font-size: 16px;
+}
+
+/* 响应式适配 */
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+  .main-content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
 </style>

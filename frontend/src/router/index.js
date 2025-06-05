@@ -12,7 +12,7 @@ import TrainSearchResult from '../pages/TrainSearchResult.vue'
 import AuthPage from '../pages/auth-page.vue'
 import BookingSuccess from '../pages/BookingSuccess.vue'
 import AboutUs from "../pages/AboutUs.vue"
-
+import MessageCenter from "../pages/MessageCenter.vue"
 
 const routes = [
     // 首页不需要登录
@@ -21,7 +21,8 @@ const routes = [
     { path: '/hotels/:id',          name: 'HotelDetail',     component: HotelDetail,   props: true },
     { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
     { path: '/aboutUs', name: "aboutUs", component: AboutUs, props: true},
-
+    // 新增：消息中心
+    { path: '/messages', name: 'MessageCenter', component: MessageCenter},
     // 火车模块，需要登录才能访问
     {
         path: '/train',

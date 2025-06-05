@@ -23,6 +23,7 @@
         <nav class="nav-links">
           <a href="#" @click.prevent="go('/auth')">登录/注册</a>
           <a href="#" @click.prevent="go('/orders')">我的订单</a>
+          <a href="#" @click.prevent="go('/messages')" class="message-link">消息中心</a>
           <a href="#" @click.prevent="go('/aboutUs')">关于我们</a>
         </nav>
       </header>
@@ -108,13 +109,39 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const route = useRoute()
 
 const currentMenu = ref(route.path.startsWith('/train') ? 'train' : 'hotel')
+
+// 用户状态管理
+const username = ref('未登录')
+const isLoggedIn = ref(false)
+const avatarUrl = ref('../assets/default-avatar.png')
+
+const logout = () => {
+  localStorage.removeItem('username')
+  localStorage.removeItem('avatar')
+  isLoggedIn.value = false
+  username.value = '未登录'
+  avatarUrl.value = '/images/default-avatar.png'
+  ElMessage.success('已退出登录')
+  router.push('/auth')
+}
+
+onMounted(() => {
+  const name = localStorage.getItem('username')
+  const avatar = localStorage.getItem('avatar')
+  if (name) {
+    username.value = name
+    isLoggedIn.value = true
+    avatarUrl.value = avatar || '/images/default-avatar.png'
+  }
+})
 
 
 // 计算住房天数
@@ -154,24 +181,24 @@ const hotels = ref([
     city: '上海',
     name: '上海吉臣维景酒店',
     stars: 4,
-    price: 398,
-    img: 'https://dimg04.c-ctrip.com/images/0202p120008x8whkt260C_R_400_400_R5_Q70_D.jpg'
+    price: 798,
+    img: '../public/images/weijing.png'
   },
   {
     id: 2,
     city: '上海',
     name: '上海陆家嘴酒店',
     stars: 5,
-    price: 588,
-    img: 'https://dimg04.c-ctrip.com/images/0202r120008x8u4gdF9E7_R_400_400_R5_Q70_D.jpg'
+    price: 1588,
+    img: '../public/images/lujiazuiHotel.png'
   },
   {
     id: 3,
     city: '上海',
     name: '上海徐家汇禧玥酒店',
     stars: 3,
-    price: 299,
-    img: 'https://dimg04.c-ctrip.com/images/0202m120008x8v1jvA8E2_R_400_400_R5_Q70_D.jpg'
+    price: 2999,
+    img: '../public/images/xujiahuiHotel.webp'
   },
   {
     id: 4,
@@ -179,7 +206,7 @@ const hotels = ref([
     name: '北京王府井希尔顿酒店',
     stars: 5,
     price: 999,
-    img: 'https://dimg03.c-ctrip.com/images/0204j120008cf7ifwA39A_R_400_400_R5_Q70_D.jpg'
+    img: '../public/images/huaerdaofu.png'
   },
   {
     id: 5,
@@ -187,7 +214,7 @@ const hotels = ref([
     name: '广州天河希尔顿酒店',
     stars: 5,
     price: 799,
-    img: 'https://dimg03.c-ctrip.com/images/0203n120008cf5cbxCBA2_R_400_400_R5_Q70_D.jpg'
+    img: '../public/images/bandao.webp'
   },
   {
     id: 6,
@@ -195,7 +222,7 @@ const hotels = ref([
     name: '三亚中心皇冠假日酒店',
     stars: 5,
     price: 1190,
-    img: 'https://dimg03.c-ctrip.com/images/0201j120008cb9uqx0EDC_R_400_400_R5_Q70_D.jpg'
+    img: '../public/images/crown.png'
   }
 ])
 const filteredHotels = computed(() => hotels.value.filter(h => h.city === currentCity.value))
@@ -205,19 +232,19 @@ const rankHotels = [
     id: 1,
     name: '君悦大酒店',
     price: 2484,
-    img: 'https://dimg03.c-ctrip.com/images/0201g120008r3u8g6E6C0_R_130_130_R5_Q70_D.jpg'
+    img: '../public/images/wangfujing.webp'
   },
   {
     id: 2,
-    name: '半岛国际酒店',
-    price: 1892,
-    img: 'https://dimg03.c-ctrip.com/images/0201g120008r3u8g6E6C0_R_130_130_R5_Q70_D.jpg'
+    name: '华尔道夫酒店',
+    price: 2899,
+    img: '../public/images/huaerdaofu.png'
   },
   {
     id: 3,
     name: '皇冠假日酒店',
-    price: 498,
-    img: 'https://dimg03.c-ctrip.com/images/0201g120008r3u8g6E6C0_R_130_130_R5_Q70_D.jpg'
+    price: 1498,
+    img: '../public/images/crown.png'
   }
 ]
 // 点击搜索：跳转到 HotelSearch 并传递查询参数
@@ -680,4 +707,9 @@ function handleSearch() {
 }
 .hotel-name, .hotel-price { color: #fff; }
 .stars { color: #fbbf24; }
+
+/* 给“消息中心”链接多一点左侧 padding，以对齐图标与文字 */
+.message-link {
+  padding-left: 12px;
+}
 </style>

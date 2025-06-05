@@ -20,11 +20,19 @@ export function searchHotels({ destination, checkInDate, checkOutDate }) {
 }
 
 /**
- * 高级搜索
+ * 高级搜索（带排序）
  * POST /api/hotels/search
+ *
+ * @param filters 形如：
+ *   {
+ *     destination: string,
+ *     checkInDate: string,    // "YYYY-MM-DD"
+ *     checkOutDate: string,   // "YYYY-MM-DD"
+ *     sortBy?,                // "price" 或 "rating"
+ *     sortOrder?              // "asc" 或 "desc"
+ *   }
  */
 export function advancedSearch(filters) {
-  // filters: { destination, checkInDate, checkOutDate, sortBy?, sortOrder? }
   return client.post('/hotels/search', filters)
 }
 
