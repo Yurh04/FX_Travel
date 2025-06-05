@@ -2,6 +2,7 @@ package org.fxtravel.fxspringboot.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 
 import java.util.List;
@@ -49,4 +50,18 @@ public interface TrainMealMapper extends BaseMapper<train_meal> {
             Double priceMin,
             Double priceMax,
             Boolean remain);
+
+    // 使用SELECT FOR UPDATE加锁查询
+    @Select("SELECT * FROM train_meal WHERE id = #{id} FOR UPDATE")
+    train_meal selectByIdForUpdate(int id);
+
+    @Update("UPDATE train_meal SET " +
+            "remain = remain - #{count}, " +
+            "WHERE id = #{id} AND remain >= #{count}")
+    int deductInventory(int id, int count);
+
+    @Update("UPDATE train_meal SET " +
+            "remain = remain + #{count}, " +
+            "WHERE id = #{id}")
+    void addInventory(int id, int count);
 }

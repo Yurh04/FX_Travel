@@ -5,6 +5,9 @@ import jakarta.annotation.PreDestroy;
 import jakarta.transaction.Transactional;
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
+import org.fxtravel.fxspringboot.enent.EventCenter;
+import org.fxtravel.fxspringboot.enent.EventType;
+import org.fxtravel.fxspringboot.enent.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.TrainMealMapper;
 import org.fxtravel.fxspringboot.mapper.TrainMealOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderDTO;
@@ -14,6 +17,7 @@ import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal_order;
 import org.fxtravel.fxspringboot.service.inter.PaymentService;
 import org.fxtravel.fxspringboot.service.inter.TrainMealOrderService;
+import org.fxtravel.fxspringboot.service.inter.TrainMealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
@@ -30,27 +34,29 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
     private TrainMealOrderMapper trainMealOrderMapper;
 
     @Autowired
-    private TrainMealMapper trainMealMapper;
+    private TrainMealService trainMealService;
 
     @Autowired
     private PaymentService paymentService;
 
+    @Autowired
+    private EventCenter eventCenter;
+
     @PostConstruct
     public void init() {
         // 注册回调，确保在服务启动时就注册
-        paymentService.registerCallback(E_PaymentType.TRAIN_MEAL, this::handlePaymentStatusChange);
+        eventCenter.subscribe(EventType.TM_STATUS_CHANGED, this::handlePaymentStatusChange);
     }
 
     @PreDestroy
     public void destroy() {
         // 服务关闭时注销回调
-        paymentService.unregisterCallback(E_PaymentType.TRAIN_MEAL);
+        eventCenter.unsubscribe(EventType.TM_STATUS_CHANGED, this::handlePaymentStatusChange);
     }
 
     // 处理支付状态变更的回调方法
-    private void handlePaymentStatusChange(Integer relatedId, E_PaymentStatus newStatus) {
-        // relatedId在这里就是订单ID
-        trainMealOrderMapper.updateStatus(relatedId, newStatus);
+    private void handlePaymentStatusChange(PaymentInfo info) {
+        trainMealOrderMapper.updateStatus(info.getOrderId(), info.getNewStatus());
     }
 
     @Override
@@ -74,10 +80,9 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
     }
 
     @Override
-    @Transactional(rollbackOn = Exception.class)
     public train_meal_order createOrder(TrainMealOrderDTO orderDTO) {
         // 1. 验证餐食信息
-        train_meal meal = trainMealMapper.selectById(orderDTO.getTrainMealId());
+        train_meal meal = trainMealService.getMealById(orderDTO.getTrainMealId());
         if (meal == null || !meal.getEnabled()) {
             throw new RuntimeException("餐食不存在或已下架");
         }
@@ -104,11 +109,14 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
                 order.getUserId(),
                 E_PaymentType.TRAIN_MEAL,
                 order.getTotalAmount(),
-                order.getId()
+                order.getId(),
+                order.getQuantity(),
+                order.getTrainMealId()
         );
 
         // 6. 启动异步支付流程
-        paymentService.simulatePaymentProcess(payment.getOrderNumber(), 30);
+        paymentService.simulatePaymentProcess(payment.getOrderNumber(), 30,
+                () -> trainMealService.checkAndGet(meal.getId(), order.getQuantity()));
 
         return order;
     }

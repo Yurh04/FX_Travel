@@ -7,18 +7,9 @@ import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface PaymentService {
-    // 回调接口定义
-    @FunctionalInterface
-    public interface PaymentStatusCallback {
-        void onPaymentStatusChanged(Integer relatedId, E_PaymentStatus newStatus);
-    }
-
-    // 注册/注销回调方法
-    void registerCallback(E_PaymentType type, PaymentStatusCallback callback);
-    void unregisterCallback(E_PaymentType type);
-
     // -------------------- 基础支付操作 --------------------
     /**
      * 创建支付订单
@@ -28,7 +19,8 @@ public interface PaymentService {
      * @param relatedId 关联业务ID
      * @return 生成的支付订单
      */
-    payment createPayment(Integer userId, E_PaymentType type, Double amount, Integer relatedId);
+    payment createPayment(Integer userId, E_PaymentType type, Double amount,
+                          Integer relatedId, Integer quantity, Integer goodId);
 
     /**
      * 完成支付
@@ -80,20 +72,6 @@ public interface PaymentService {
      */
     List<payment> queryPayments(PaymentQueryDTO queryDTO);
 
-    /**
-     * 根据交易类型获取支付记录
-     * @param type 交易类型
-     * @return 支付记录列表
-     */
-    List<payment> getPaymentsByType(E_PaymentType type);
-
-    /**
-     * 统计某类型的支付总金额
-     * @param type 交易类型
-     * @return 总金额
-     */
-    Double sumAmountByType(E_PaymentType type);
-
     // -------------------- 支付模拟接口 --------------------
     /**
      * 模拟支付流程
@@ -101,7 +79,8 @@ public interface PaymentService {
      * @param timeout 超时时间(秒)
      * @return CompletableFuture<Boolean> 支付结果
      */
-    PaymentResultDTO simulatePaymentProcess(String orderNumber, long timeout);
+    PaymentResultDTO simulatePaymentProcess(String orderNumber, long timeout,
+                                            Supplier<Boolean> inventoryDeduction);
 
     /**
      * 检查支付状态

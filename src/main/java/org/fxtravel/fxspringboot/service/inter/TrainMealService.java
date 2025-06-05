@@ -1,11 +1,12 @@
 package org.fxtravel.fxspringboot.service.inter;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
 
 import java.util.List;
 
-public interface TrainMealService {
+public interface TrainMealService extends GoodService {
     // 用户查询接口
     /**
      * 根据列车ID获取用户可见的餐食列表（enabled=true）

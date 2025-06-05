@@ -1,8 +1,18 @@
 package org.fxtravel.fxspringboot.service.impl;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.transaction.Transactional;
+import org.fxtravel.fxspringboot.enent.EventCenter;
+import org.fxtravel.fxspringboot.enent.EventType;
+import org.fxtravel.fxspringboot.enent.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.TrainMealMapper;
+import org.fxtravel.fxspringboot.mapper.TrainMealOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal;
+import org.fxtravel.fxspringboot.pojo.entities.train_meal_order;
+import org.fxtravel.fxspringboot.service.inter.GoodService;
+import org.fxtravel.fxspringboot.service.inter.TrainMealOrderService;
 import org.fxtravel.fxspringboot.service.inter.TrainMealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +26,31 @@ public class TrainMealServiceImpl implements TrainMealService {
 
     @Autowired
     private TrainMealMapper trainMealMapper;
+
+    @Autowired
+    private EventCenter eventCenter;
+
+    @PostConstruct
+    public void init() {
+        // 注册回调，确保在服务启动时就注册
+        eventCenter.subscribe(EventType.TM_STATUS_CHANGED, this::handlePaymentStatusChange);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        // 服务关闭时注销回调
+        eventCenter.unsubscribe(EventType.TM_STATUS_CHANGED, this::handlePaymentStatusChange);
+    }
+
+    // 处理支付状态变更的回调方法
+    private void handlePaymentStatusChange(PaymentInfo info) {
+        switch (info.getNewStatus()){
+            case FAILED:
+            case REFUNDED:
+                putBack(info.getGoodId(), info.getQuantity());
+                break;
+        }
+    }
 
     // 用户查询接口实现
 
@@ -140,5 +175,25 @@ public class TrainMealServiceImpl implements TrainMealService {
     @Override
     public train_meal getMealById(Integer id) {
         return trainMealMapper.selectById(id);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public boolean checkAndGet(int id, int count) {
+        // 1. 检查库存是否充足
+        train_meal obj = trainMealMapper.selectByIdForUpdate(id);
+        if (obj == null || obj.getRemain() < count) {
+            return false;
+        }
+
+        // 2. 扣减库存
+        int updated = trainMealMapper.deductInventory(id, count);
+
+        return updated > 0;
+    }
+
+    @Override
+    public void putBack(int id, int count) {
+        trainMealMapper.addInventory(id, count);
     }
 }

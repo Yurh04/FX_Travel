@@ -26,6 +26,8 @@ public class payment {
     private E_PaymentStatus status; // 支付状态
     private Double amount; // 支付金额
     private LocalDateTime paymentTime; // 支付时间
-    private Integer relatedId; // 关联的业务ID（如车票ID、餐食订单ID、酒店订单ID）
+    private Integer relatedId; // 订单ID
     private Long timeoutSeconds;
+    private Integer quantity;
+    private Integer goodId;
 }

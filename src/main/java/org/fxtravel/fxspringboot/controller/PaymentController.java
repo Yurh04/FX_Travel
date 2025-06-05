@@ -33,11 +33,11 @@ public class PaymentController {
         return ResponseEntity.ok(payment);
     }
 
-    @GetMapping("/type/{type}")
-    public ResponseEntity<List<payment>> getPaymentsByType(@PathVariable E_PaymentType type) {
-        List<payment> payments = paymentService.getPaymentsByType(type);
-        return ResponseEntity.ok(payments);
-    }
+//    @GetMapping("/type/{type}")
+//    public ResponseEntity<List<payment>> getPaymentsByType(@PathVariable E_PaymentType type) {
+//        List<payment> payments = paymentService.getPaymentsByType(type);
+//        return ResponseEntity.ok(payments);
+//    }
 
     @PostMapping("/query")
     public ResponseEntity<List<payment>> queryPayments(@RequestBody PaymentQueryDTO queryDTO) {
@@ -46,15 +46,15 @@ public class PaymentController {
     }
 
     // -------------------- 支付操作接口 --------------------
-    @PostMapping
-    public ResponseEntity<payment> createPayment(@RequestBody PaymentDTO paymentDTO) {
-        payment payment = paymentService.createPayment(
-                paymentDTO.getUserId(),
-                paymentDTO.getType(),
-                paymentDTO.getAmount(),
-                paymentDTO.getRelatedId());
-        return ResponseEntity.ok(payment);
-    }
+//    @PostMapping
+//    public ResponseEntity<payment> createPayment(@RequestBody PaymentDTO paymentDTO) {
+//        payment payment = paymentService.createPayment(
+//                paymentDTO.getUserId(),
+//                paymentDTO.getType(),
+//                paymentDTO.getAmount(),
+//                paymentDTO.getRelatedId());
+//        return ResponseEntity.ok(payment);
+//    }
 
     @PostMapping("/complete/{orderNumber}")
     public ResponseEntity<Boolean> completePayment(@PathVariable String orderNumber) {
@@ -80,21 +80,14 @@ public class PaymentController {
         return ResponseEntity.ok(result);
     }
 
-    // -------------------- 统计接口 --------------------
-    @GetMapping("/stats/{type}")
-    public ResponseEntity<Double> sumAmountByType(@PathVariable E_PaymentType type) {
-        Double total = paymentService.sumAmountByType(type);
-        return ResponseEntity.ok(total);
-    }
-
     // -------------------- 异步支付接口 --------------------
-    @PostMapping("/async/{orderNumber}")
-    public ResponseEntity<PaymentResultDTO> processPaymentAsync(
-            @PathVariable String orderNumber,
-            @RequestParam(defaultValue = "30") long timeoutSeconds) {
-        PaymentResultDTO result = paymentService.simulatePaymentProcess(orderNumber, timeoutSeconds);
-        return ResponseEntity.ok(result);
-    }
+//    @PostMapping("/async/{orderNumber}")
+//    public ResponseEntity<PaymentResultDTO> processPaymentAsync(
+//            @PathVariable String orderNumber,
+//            @RequestParam(defaultValue = "30") long timeoutSeconds) {
+//        PaymentResultDTO result = paymentService.simulatePaymentProcess(orderNumber, timeoutSeconds);
+//        return ResponseEntity.ok(result);
+//    }
 
     @GetMapping("/async/{orderNumber}")
     public ResponseEntity<PaymentResultDTO> getAsyncStatus(@PathVariable String orderNumber) {
