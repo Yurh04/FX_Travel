@@ -1,19 +1,24 @@
 package org.fxtravel.fxspringboot.service.impl;
 
 import jakarta.transaction.Transactional;
+import org.fxtravel.fxspringboot.common.E_NotificationEventType;
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
 import org.fxtravel.fxspringboot.mapper.PaymentMapper;
+import org.fxtravel.fxspringboot.pojo.dto.notification.NotificationRequestDTO;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
+import org.fxtravel.fxspringboot.service.inter.NotificationService;
 import org.fxtravel.fxspringboot.service.inter.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -39,6 +44,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private PaymentMapper paymentMapper;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private final Map<String, CompletableFuture<Boolean>> pendingPayments = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
@@ -77,6 +85,53 @@ public class PaymentServiceImpl implements PaymentService {
             System.err.println("No callback found for type " + type);
     }
 
+    private void handlePaymentNotification(payment payment, E_PaymentStatus newStatus) {
+        // 确定通知事件类型
+        E_NotificationEventType eventType = null;
+        String message = "";
+
+        switch (newStatus) {
+            case PENDING:
+                eventType = E_NotificationEventType.PAYMENT_CREATED;
+                message = "您的支付订单已创建，订单号: " + payment.getOrderNumber();
+                break;
+            case COMPLETED:
+                eventType = E_NotificationEventType.PAYMENT_COMPLETED;
+                message = "支付成功! 订单号: " + payment.getOrderNumber() + ", 金额: " + payment.getAmount();
+                break;
+            case FAILED:
+                eventType = E_NotificationEventType.PAYMENT_FAILED;
+                message = "支付失败! 订单号: " + payment.getOrderNumber();
+                break;
+            case REFUNDED:
+                eventType = E_NotificationEventType.PAYMENT_REFUNDED;
+                message = "退款成功! 订单号: " + payment.getOrderNumber() + ", 金额: " + payment.getAmount();
+                break;
+            case FINISHED:
+                eventType = E_NotificationEventType.PAYMENT_FINISHED;
+                message = "交易完成! 订单号: " + payment.getOrderNumber();
+                break;
+        }
+
+        if (eventType != null) {
+            NotificationRequestDTO request = new NotificationRequestDTO();
+            request.setUserId(payment.getUserId());
+            request.setEventType(eventType);
+            request.setOrderId(payment.getOrderNumber());
+            request.setAmount(BigDecimal.valueOf(payment.getAmount()));
+
+            // 添加额外详情
+            Map<String, Object> details = new HashMap<>();
+            details.put("paymentType", payment.getType().name());
+            if (payment.getRelatedId() != null) {
+                details.put("relatedId", payment.getRelatedId());
+            }
+            request.setDetails(details);
+
+            notificationService.createNotification(request);
+        }
+    }
+
     @Override
     @Transactional(rollbackOn = Exception.class)
     public boolean completePayment(String orderNumber) {
@@ -89,7 +144,9 @@ public class PaymentServiceImpl implements PaymentService {
         // 更新支付状态
         int result = paymentMapper.updateStatus(orderNumber, E_PaymentStatus.COMPLETED, LocalDateTime.now());
         if (result > 0) {
+            payment.setStatus(E_PaymentStatus.COMPLETED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(), E_PaymentStatus.COMPLETED);
+            handlePaymentNotification(payment, E_PaymentStatus.COMPLETED);
         }
 
         // 通知等待中的支付流程
@@ -113,7 +170,9 @@ public class PaymentServiceImpl implements PaymentService {
         // 更新支付状态
         int result = paymentMapper.updateStatus(orderNumber, E_PaymentStatus.FAILED, LocalDateTime.now());
         if (result > 0) {
+            payment.setStatus(E_PaymentStatus.FAILED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(), E_PaymentStatus.FAILED);
+            handlePaymentNotification(payment, E_PaymentStatus.FAILED);
         }
 
         // 通知等待中的支付流程
@@ -137,7 +196,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         int result = paymentMapper.updateStatus(orderNumber, E_PaymentStatus.REFUNDED, LocalDateTime.now());
         if (result > 0) {
+            payment.setStatus(E_PaymentStatus.REFUNDED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(), E_PaymentStatus.REFUNDED);
+            handlePaymentNotification(payment, E_PaymentStatus.REFUNDED);
         }
 
         return result > 0;
@@ -154,7 +215,9 @@ public class PaymentServiceImpl implements PaymentService {
 
         int result = paymentMapper.updateStatus(orderNumber, E_PaymentStatus.FINISHED, LocalDateTime.now());
         if (result > 0) {
+            payment.setStatus(E_PaymentStatus.FINISHED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(), E_PaymentStatus.FINISHED);
+            handlePaymentNotification(payment, E_PaymentStatus.FINISHED);
         }
 
         return result > 0;
@@ -241,6 +304,21 @@ public class PaymentServiceImpl implements PaymentService {
                 payment currentPayment = paymentMapper.selectByOrderNumber(orderNumber);
                 if (currentPayment != null && currentPayment.getStatus() == E_PaymentStatus.PENDING) {
                     paymentMapper.updateStatus(orderNumber, E_PaymentStatus.FAILED, LocalDateTime.now());
+
+                    // 发送超时通知
+                    NotificationRequestDTO request = new NotificationRequestDTO();
+                    request.setUserId(currentPayment.getUserId());
+                    request.setEventType(E_NotificationEventType.PAYMENT_TIMEOUT);
+                    request.setOrderId(orderNumber);
+                    request.setAmount(BigDecimal.valueOf(currentPayment.getAmount()));
+
+                    Map<String, Object> details = new HashMap<>();
+                    details.put("paymentType", currentPayment.getType().name());
+                    details.put("timeoutSeconds", currentPayment.getTimeoutSeconds());
+                    request.setDetails(details);
+
+                    notificationService.createNotification(request);
+
                     future.complete(false);
                     pendingPayments.remove(orderNumber);
                 }
