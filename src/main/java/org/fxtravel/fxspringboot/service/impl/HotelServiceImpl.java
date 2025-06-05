@@ -23,9 +23,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class HotelServiceImpl implements HotelService {
     @Autowired
-    private final HotelMapper hotelMapper;
+    private HotelMapper hotelMapper;
     @Autowired
-    private final NotificationService notificationService;
+    private NotificationService notificationService;
 
     @Override
     public List<Hotel> searchHotels(String destination, String sortBy, boolean ascending) {
@@ -71,7 +71,6 @@ public class HotelServiceImpl implements HotelService {
         notification.setEventType(E_NotificationEventType.HOTEL_BOOKED);
         notification.setOrderId(booking.getBookingId());
         notificationService.createNotification(notification);
-
         return booking;
     }
 

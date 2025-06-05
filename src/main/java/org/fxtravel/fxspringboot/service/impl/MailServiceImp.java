@@ -2,6 +2,8 @@ package org.fxtravel.fxspringboot.service.impl;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.fxtravel.fxspringboot.mapper.HotelMapper;
+import org.fxtravel.fxspringboot.mapper.UserMapper;
 import org.fxtravel.fxspringboot.pojo.entities.Notification;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.service.inter.MailService;
@@ -23,7 +25,7 @@ public class MailServiceImp implements MailService {
     @Autowired
     private JavaMailSender mailSender;
     @Autowired
-    private UserService userService;
+    private UserMapper usermapper;
 
     @Override
     public void sendVerificationEmail(String to, String verificationCode, String subject) {
@@ -40,7 +42,7 @@ public class MailServiceImp implements MailService {
     @Override
     public boolean sendNotificationEmail(Notification notification) {
         try {
-            User user = userService.getUserById(notification.getUserId());
+            User user = usermapper.selectById(notification.getUserId());
             if (user == null || user.getEmail() == null) {
                 log.warn("用户邮箱不存在");
                 return false;

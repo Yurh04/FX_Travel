@@ -8,6 +8,7 @@ import org.fxtravel.fxspringboot.mapper.NotificationMapper;
 import org.fxtravel.fxspringboot.pojo.dto.notification.NotificationRequestDTO;
 import org.fxtravel.fxspringboot.pojo.entities.Notification;
 import org.fxtravel.fxspringboot.service.inter.MailService;
+import org.fxtravel.fxspringboot.service.inter.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import static com.baomidou.mybatisplus.extension.ddl.DdlScriptErrorHandler.Print
 
 @Service
 @RequiredArgsConstructor
-public class NotificationServiceImp {
+public class NotificationServiceImp implements NotificationService {
     @Autowired
     private final NotificationMapper notificationMapper;
 
