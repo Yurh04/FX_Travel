@@ -32,7 +32,7 @@ public interface UserService {
      * @param userId 用户ID
      * @return 用户实体
      */
-    public User getUserById(Integer userId);
+
 
 }
 

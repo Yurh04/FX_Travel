@@ -40,7 +40,7 @@ public class HotelBooking {
     @Column(name = "status", nullable = false, length = 20)
     private E_HotelBookingStatus status;// 订单状态CONFIRMED,CANCELED,FAILED,PENDING
 
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    @Column(name = "total_amount", nullable = false, precision = 10)
     private Double totalAmount;// 订单总⾦额（元）
 
     @Column(name = "created_at", nullable = false)

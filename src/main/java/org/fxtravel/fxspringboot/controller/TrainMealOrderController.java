@@ -1,13 +1,15 @@
 package org.fxtravel.fxspringboot.controller;
 
-import org.fxtravel.fxspringboot.common.E_PaymentStatus;
+import jakarta.servlet.http.HttpSession;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderDTO;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderQueryDTO;
+import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.pojo.entities.train_meal_order;
 import org.fxtravel.fxspringboot.service.inter.PaymentService;
 import org.fxtravel.fxspringboot.service.inter.TrainMealOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +33,12 @@ public class TrainMealOrderController {
      * @return 订单详情
      */
     @GetMapping("/{id}")
-    public ResponseEntity<train_meal_order> getOrderById(@PathVariable Integer id) {
+    public ResponseEntity<train_meal_order> getOrderById(@PathVariable Integer id, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         train_meal_order order = trainMealOrderService.getOrderById(id);
         return ResponseEntity.ok(order);
     }
@@ -42,7 +49,12 @@ public class TrainMealOrderController {
      * @return 订单列表
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<train_meal_order>> getOrdersByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<List<train_meal_order>> getOrdersByUserId(@PathVariable Integer userId, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<train_meal_order> orders = trainMealOrderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
@@ -54,7 +66,12 @@ public class TrainMealOrderController {
      */
     @GetMapping("/ticket/{ticketReservationId}")
     public ResponseEntity<List<train_meal_order>> getOrdersByTicketReservationId(
-            @PathVariable Integer ticketReservationId) {
+            @PathVariable Integer ticketReservationId, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<train_meal_order> orders = trainMealOrderService.getOrdersByTicketReservationId(ticketReservationId);
         return ResponseEntity.ok(orders);
     }
@@ -65,7 +82,13 @@ public class TrainMealOrderController {
      * @return 符合条件的订单列表
      */
     @PostMapping("/query")
-    public ResponseEntity<List<train_meal_order>> queryOrders(@RequestBody TrainMealOrderQueryDTO queryDTO) {
+    public ResponseEntity<List<train_meal_order>> queryOrders(@RequestBody TrainMealOrderQueryDTO queryDTO
+            , HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         List<train_meal_order> orders = trainMealOrderService.queryOrders(queryDTO);
         return ResponseEntity.ok(orders);
     }
@@ -78,7 +101,13 @@ public class TrainMealOrderController {
      * @return 创建的订单详情
      */
     @PostMapping
-    public ResponseEntity<train_meal_order> createOrder(@RequestBody TrainMealOrderDTO orderDTO) {
+    public ResponseEntity<train_meal_order> createOrder(@RequestBody TrainMealOrderDTO orderDTO
+            , HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         train_meal_order order = trainMealOrderService.createOrder(orderDTO);
         return ResponseEntity.ok(order);
     }
@@ -111,7 +140,13 @@ public class TrainMealOrderController {
      * @return 总金额
      */
     @GetMapping("/stats/user/{userId}")
-    public ResponseEntity<Double> sumAmountByUserId(@PathVariable Integer userId) {
+    public ResponseEntity<Double> sumAmountByUserId(@PathVariable Integer userId
+            , HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         Double total = trainMealOrderService.sumAmountByUserId(userId);
         return ResponseEntity.ok(total);
     }
@@ -122,7 +157,13 @@ public class TrainMealOrderController {
      * @return 总销量
      */
     @GetMapping("/stats/meal/{trainMealId}")
-    public ResponseEntity<Integer> sumQuantityByTrainMealId(@PathVariable Integer trainMealId) {
+    public ResponseEntity<Integer> sumQuantityByTrainMealId(@PathVariable Integer trainMealId
+            , HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         Integer total = trainMealOrderService.sumQuantityByTrainMealId(trainMealId);
         return ResponseEntity.ok(total);
     }

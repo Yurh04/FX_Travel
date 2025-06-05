@@ -29,10 +29,10 @@ public class Hotel {
     @Column(name = "address", nullable = false, length = 200)
     private String address;// 详细地址
 
-    @Column(name = "price_per_night", nullable = false, precision = 10, scale = 2)
+    @Column(name = "price_per_night", nullable = false, precision = 10)
     private Double pricePerNight;// 每晚基础价格（元）
 
-    @Column(name = "rating", precision = 3, scale = 1)
+    @Column(name = "rating", precision = 3)
     private Double rating;// 评分（0–5）
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -41,7 +41,9 @@ public class Hotel {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = true;// 是否对外可订
 
-    @OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+    // 单向关联：移除 mappedBy，使用 @JoinColumn 直接定义外键
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "hotel_id") // 指定外键列名
     private List<RoomType> roomTypes = new ArrayList<>();
 
 }
