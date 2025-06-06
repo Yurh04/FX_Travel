@@ -56,12 +56,12 @@ public interface TrainMealMapper extends BaseMapper<train_meal> {
     train_meal selectByIdForUpdate(int id);
 
     @Update("UPDATE train_meal SET " +
-            "remain = remain - #{count}, " +
+            "remain = remain - #{count} " +
             "WHERE id = #{id} AND remain >= #{count}")
     int deductInventory(int id, int count);
 
     @Update("UPDATE train_meal SET " +
-            "remain = remain + #{count}, " +
+            "remain = remain + #{count} " +
             "WHERE id = #{id}")
     void addInventory(int id, int count);
 }

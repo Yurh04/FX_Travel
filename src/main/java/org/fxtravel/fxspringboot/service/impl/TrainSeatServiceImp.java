@@ -1,6 +1,12 @@
 package org.fxtravel.fxspringboot.service.impl;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.transaction.Transactional;
 import org.fxtravel.fxspringboot.common.SeatType;
+import org.fxtravel.fxspringboot.enent.EventCenter;
+import org.fxtravel.fxspringboot.enent.EventType;
+import org.fxtravel.fxspringboot.enent.data.PaymentInfo;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
 import org.fxtravel.fxspringboot.repository.TrainRepository;
 import org.fxtravel.fxspringboot.repository.TrainSeatRepository;
@@ -17,6 +23,28 @@ public class TrainSeatServiceImp implements TrainSeatService {
     TrainRepository trainRepository;
     @Autowired
     TrainSeatRepository trainSeatRepository;
+    @Autowired
+    EventCenter eventCenter;
+
+    @PostConstruct
+    public void init() {
+        eventCenter.subscribe(EventType.TT_STATUS_CHANGED, this::handlePaymentStatusChange);
+    }
+    @PreDestroy
+    public void destroy() {
+        eventCenter.unsubscribe(EventType.TT_STATUS_CHANGED,this::handlePaymentStatusChange);
+    }
+
+    // 处理支付状态变更的回调方法
+    private void handlePaymentStatusChange(PaymentInfo info) {
+        switch (info.getNewStatus()){
+            case FAILED:
+            case REFUNDED:
+                putBack(info.getGoodId(), info.getQuantity());
+                break;
+        }
+    }
+
     @Override
     public void addTrainSeat(Integer trainId, SeatType seatType, BigDecimal price, Integer available) {
         var t = trainRepository.findById(trainId).orElse(null);
@@ -74,5 +102,21 @@ public class TrainSeatServiceImp implements TrainSeatService {
         ts.setPrice(price);
         ts.setAvailable(available);
         trainSeatRepository.save(ts);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public boolean checkAndGet(int id, int count) {
+        TrainSeat ts = trainSeatRepository.findById(id).orElse(null);
+        if (ts == null || ts.getAvailable() < count) {
+            return false;
+        }
+        int updated = trainSeatRepository.deductInventory(id, count);
+        return updated > 0;
+    }
+
+    @Override
+    public void putBack(int id, int count) {
+        trainSeatRepository.addInventory(id, count);
     }
 }
