@@ -177,7 +177,7 @@ export const resetByOldPassword = (data) => {
 
 /**
  * 1. 获取当前用户信息
- * GET /api/user/userdata
+ * POST /api/user/userdata
  *
  * @returns {Promise} AxiosPromise
  *
@@ -185,6 +185,8 @@ export const resetByOldPassword = (data) => {
  *   getCurrentUser()
  *     .then(res => console.log(res.data))
  *     .catch(err => console.error(err))
+ *
+ * 说明：已将原来的 GET 请求改为 POST，无需请求体，后端对应接口应作相应调整。
  */
 export const getCurrentUser = () => {
     return request.get('/user/userdata')

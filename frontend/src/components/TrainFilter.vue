@@ -1,101 +1,139 @@
-<!-- 文件：src/components/TrainFilter.vue -->
 <template>
   <div class="filter-panel">
+    <!-- 头部：标题 + 全部重置 -->
     <div class="filter-header">
       <h3>筛选</h3>
-      <button class="reset-btn" @click="resetFilters">全部重置</button>
+      <button class="reset-btn" @click="resetAll">全部重置</button>
     </div>
 
-    <!-- “只看有票” -->
+    <!-- 只看有票 -->
     <div class="filter-section">
-      <label>
+      <label class="checkbox-label">
         <input type="checkbox" v-model="onlyAvailableProxy" />
-        只看有票
+        <span>只看有票</span>
       </label>
     </div>
 
     <!-- 车型 -->
     <div class="filter-section">
       <div class="section-header">
-        车型 <span class="reset" @click="selectedTypesProxy = []">重置</span>
+        车型
+        <span class="reset-text" @click="selectedTypesProxy = []">重置</span>
       </div>
       <div class="checkbox-group">
-        <!-- 这里的 `type` 就是原始的 'G/C'、'D'、'Z/T/K' 等 -->
-        <label v-for="type in trainTypes" :key="type">
+        <label
+            v-for="type in trainTypeOptions"
+            :key="type"
+            class="checkbox-label"
+        >
           <input
               type="checkbox"
               :value="type"
               v-model="selectedTypesProxy"
           />
-          <!-- 用 labelMap 映射成中文，比如 '高铁(G/C)' -->
-          {{ labelMap[type] || type }}
+          <span>{{ labelMap[type] || type }}</span>
         </label>
       </div>
     </div>
 
-    <!-- 出发时间 -->
+    <!-- 出发时间段 -->
     <div class="filter-section">
       <div class="section-header">
-        出发时间 <span class="reset" @click="selectedTimesProxy = []">重置</span>
+        出发时间
+        <span class="reset-text" @click="selectedTimesProxy = []">重置</span>
       </div>
       <div class="time-range-group">
-        <label v-for="range in timeRanges" :key="range">
+        <label
+            v-for="range in timeRanges"
+            :key="range"
+            class="checkbox-label"
+        >
           <input
               type="checkbox"
               :value="range"
               v-model="selectedTimesProxy"
           />
-          {{ range }}
+          <span>{{ range }}</span>
         </label>
       </div>
     </div>
 
-    <!-- 更多可选项 -->
+    <!-- 座席类型（展开后显示） -->
     <Transition name="fade-expand">
-      <div v-if="props.expanded" class="more-options">
-        <!-- 座席 -->
-        <div class="filter-section">
-          <div class="section-header">
-            座席 <span class="reset">重置</span>
-          </div>
-          <div class="checkbox-group">
-            <label v-for="seat in seatTypes" :key="seat">
-              <input type="checkbox" />
-              {{ seat }}
-            </label>
-          </div>
+      <div v-if="props.expanded" class="filter-section">
+        <div class="section-header">
+          座席类型
+          <span class="reset-text" @click="selectedSeatTypesProxy = []">重置</span>
         </div>
-
-        <!-- 出发车站 -->
-        <div class="filter-section">
-          <div class="section-header">
-            出发车站 <span class="reset">重置</span>
-          </div>
-          <div class="checkbox-group">
-            <label v-for="station in departStations" :key="station">
-              <input type="checkbox" />
-              {{ station }}
-            </label>
-          </div>
-        </div>
-
-        <!-- 到达车站 -->
-        <div class="filter-section">
-          <div class="section-header">
-            到达车站 <span class="reset">重置</span>
-          </div>
-          <div class="checkbox-group">
-            <label v-for="station in arriveStations" :key="station">
-              <input type="checkbox" />
-              {{ station }}
-            </label>
-          </div>
+        <div class="checkbox-group">
+          <label
+              v-for="seat in seatTypeOptions"
+              :key="seat"
+              class="checkbox-label"
+          >
+            <input
+                type="checkbox"
+                :value="seat"
+                v-model="selectedSeatTypesProxy"
+            />
+            <span>{{ seat }}</span>
+          </label>
         </div>
       </div>
     </Transition>
 
+    <!-- 出发车站（展开后显示） -->
+    <Transition name="fade-expand">
+      <div v-if="props.expanded" class="filter-section">
+        <div class="section-header">
+          出发车站
+          <span class="reset-text" @click="selectedDepartStationsProxy = []">重置</span>
+        </div>
+        <div class="checkbox-group">
+          <label
+              v-for="station in departStationOptions"
+              :key="station"
+              class="checkbox-label"
+          >
+            <input
+                type="checkbox"
+                :value="station"
+                v-model="selectedDepartStationsProxy"
+            />
+            <span>{{ station }}</span>
+          </label>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 到达车站（展开后显示） -->
+    <Transition name="fade-expand">
+      <div v-if="props.expanded" class="filter-section">
+        <div class="section-header">
+          到达车站
+          <span class="reset-text" @click="selectedArriveStationsProxy = []">重置</span>
+        </div>
+        <div class="checkbox-group">
+          <label
+              v-for="station in arriveStationOptions"
+              :key="station"
+              class="checkbox-label"
+          >
+            <input
+                type="checkbox"
+                :value="station"
+                v-model="selectedArriveStationsProxy"
+            />
+            <span>{{ station }}</span>
+          </label>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 展开/收起 控制 -->
     <div class="expand-control" @click="emit('toggle-expand')">
-      {{ props.expanded ? '收起列表 ▲' : '展开列表 ▼' }}
+      <span v-if="props.expanded">收起 ▲</span>
+      <span v-else>展开 ▼</span>
     </div>
   </div>
 </template>
@@ -104,35 +142,51 @@
 import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
-  onlyAvailable: Boolean,
-  selectedTypes: Array,
-  selectedTimes: Array,
-  expanded: Boolean,
-  trains: {
-    type: Array,
-    default: () => []
-  }
+  onlyAvailable: { type: Boolean, default: false },
+  selectedTypes: { type: Array, default: () => [] },
+  selectedTimes: { type: Array, default: () => [] },
+  selectedSeatTypes: { type: Array, default: () => [] },
+  selectedDepartStations: { type: Array, default: () => [] },
+  selectedArriveStations: { type: Array, default: () => [] },
+  expanded: { type: Boolean, default: false },
+  trains: { type: Array, default: () => [] }
 })
+
 const emit = defineEmits([
   'update:onlyAvailable',
   'update:selectedTypes',
   'update:selectedTimes',
+  'update:selectedSeatTypes',
+  'update:selectedDepartStations',
+  'update:selectedArriveStations',
   'toggle-expand'
 ])
 
-// 1. Proxy for “只看有票”
 const onlyAvailableProxy = ref(props.onlyAvailable)
 watch(onlyAvailableProxy, val => emit('update:onlyAvailable', val))
 
-// 2. Proxy for “车型筛选”，传递原始代码数组
 const selectedTypesProxy = ref([...props.selectedTypes])
 watch(selectedTypesProxy, val => emit('update:selectedTypes', val))
 
-// 3. Proxy for “时间段筛选”
 const selectedTimesProxy = ref([...props.selectedTimes])
 watch(selectedTimesProxy, val => emit('update:selectedTimes', val))
 
-// 时间范围选项固定
+const selectedSeatTypesProxy = ref([...props.selectedSeatTypes])
+watch(selectedSeatTypesProxy, val => emit('update:selectedSeatTypes', val))
+
+const selectedDepartStationsProxy = ref([...props.selectedDepartStations])
+watch(selectedDepartStationsProxy, val => emit('update:selectedDepartStations', val))
+
+const selectedArriveStationsProxy = ref([...props.selectedArriveStations])
+watch(selectedArriveStationsProxy, val => emit('update:selectedArriveStations', val))
+
+const trainTypeOptions = computed(() => {
+  const types = props.trains
+      .map(item => item.train?.trainType)
+      .filter(Boolean)
+  return Array.from(new Set(types)).sort()
+})
+
 const timeRanges = [
   '00:00 - 06:00',
   '06:00 - 12:00',
@@ -140,70 +194,68 @@ const timeRanges = [
   '18:00 - 24:00'
 ]
 
-// 4. trainTypes 从原始数据里取 “t.type” 唯一值
-const trainTypes = computed(() => {
-  return [
-    ...new Set(props.trains.map(t => t.type).filter(Boolean))
-  ]
+const seatTypeOptions = computed(() => {
+  const allSeats = props.trains
+      .flatMap(item => item.trainSeats || [])
+      .map(s => s.seatType)
+      .filter(Boolean)
+  return Array.from(new Set(allSeats)).sort()
 })
 
-// 5. 一个映射表，把原始代码映射为中文标签
+const departStationOptions = computed(() => {
+  const allDepart = props.trains
+      .map(item => item.train?.fromStation)
+      .filter(Boolean)
+  return Array.from(new Set(allDepart)).sort()
+})
+
+const arriveStationOptions = computed(() => {
+  const allArrive = props.trains
+      .map(item => item.train?.toStation)
+      .filter(Boolean)
+  return Array.from(new Set(allArrive)).sort()
+})
+
 const labelMap = {
-  'G/C': '高铁(G/C)',
-  'D': '动车(D)',
-  'Z/T/K': '普通(Z/T/K)',
-  'L/Y': '其他(L/Y)'
+  'GREEN_TRAIN': '绿皮/城际',
+  'HIGH_SPEED': '高铁/动车',
+  'BUSINESS_CLASS_SEAT': '商务座',
+  'FIRST_CLASS_SEAT': '一等座',
+  'SECOND_CLASS_SEAT': '二等座'
 }
 
-// 座席、出发/到达车站 这些根据你的逻辑保持不变
-const seatTypes = computed(() => {
-  return [
-    ...new Set(
-        props.trains
-            .map(t => {
-              const match = t.seat?.match(/[\u4e00-\u9fa5]+/)
-              return match ? match[0] : ''
-            })
-            .filter(Boolean)
-    )
-  ]
-})
-
-const departStations = computed(() => {
-  return [
-    ...new Set(props.trains.map(t => t.departStation).filter(Boolean))
-  ]
-})
-
-const arriveStations = computed(() => {
-  return [
-    ...new Set(props.trains.map(t => t.arriveStation).filter(Boolean))
-  ]
-})
-
-// 6. “全部重置” 的方法
-const resetFilters = () => {
+const resetAll = () => {
   onlyAvailableProxy.value = false
   selectedTypesProxy.value = []
   selectedTimesProxy.value = []
+  selectedSeatTypesProxy.value = []
+  selectedDepartStationsProxy.value = []
+  selectedArriveStationsProxy.value = []
 }
 </script>
 
 <style scoped>
 .filter-panel {
-  background: white;
+  background: #ffffff;
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   font-family: Arial, sans-serif;
   width: 260px;
   font-size: 14px;
+  color: #333;
 }
+
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+}
+.filter-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
 }
 .reset-btn {
   background: none;
@@ -211,49 +263,49 @@ const resetFilters = () => {
   color: #409eff;
   cursor: pointer;
   font-size: 13px;
+  padding: 2px 4px;
 }
+.reset-btn:hover {
+  text-decoration: underline;
+}
+
 .filter-section {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 16px;
   margin-top: 16px;
 }
-.checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-.time-range-group {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
+
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
-}
-.reset {
-  color: #409eff;
-  font-size: 13px;
-  cursor: pointer;
-}
-.expand-control {
-  text-align: center;
-  color: #1677ff;
+  font-weight: 600;
   font-size: 14px;
-  margin-top: 20px;
+  margin-bottom: 8px;
+}
+.reset-text {
+  color: #409eff;
+  font-size: 12px;
   cursor: pointer;
-  user-select: none;
 }
-.more-options {
-  margin-top: 12px;
-  background: #f9fafc;
-  padding: 12px;
-  border-radius: 8px;
+.reset-text:hover {
+  text-decoration: underline;
 }
+
+.checkbox-group,
+.time-range-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.checkbox-label input {
+  cursor: pointer;
+}
+
 .fade-expand-enter-active,
 .fade-expand-leave-active {
   transition: all 0.3s ease;
@@ -262,5 +314,17 @@ const resetFilters = () => {
 .fade-expand-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+.expand-control {
+  text-align: center;
+  color: #1677ff;
+  font-size: 14px;
+  margin-top: 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.expand-control:hover {
+  text-decoration: underline;
 }
 </style>
