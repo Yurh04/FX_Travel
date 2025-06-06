@@ -46,10 +46,10 @@ export const getSeatsByTrain = (trainId) => request.get(`/train/seat/list/${trai
 /* ------------------------ 车票购买模块 ------------------------ */
 
 // 按出发时间查询车次
-export const searchByDepartureTime = (params) => request.post('/v1/train/search/by-departure-time', { params })
+export const searchByDepartureTime = (params) => request.post('/v1/train/search/by-departure-time', params)
 
 // 按旅途时长查询车次
-export const searchByDuration = (params) => request.get('/v1/train/search/by-travel-duration', { params })
+export const searchByDuration = (params) => request.get('/v1/train/search/by-travel-duration', params)
 
 // 生成车票
 export const generateTicket = (userId, trainSeatId) => request.put(`/v1/train/ticket/get/${userId}`, { trainSeatId })

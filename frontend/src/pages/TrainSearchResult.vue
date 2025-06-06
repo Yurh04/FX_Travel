@@ -111,7 +111,6 @@ const fetchTrains = async () => {
       arrivalStation: to.value,
       departureDate: date.value
     })
-    // 假设后端返回 { code: 0, data: [ ... ] }
     allTrains.value = res.data || []
   } catch (err) {
     console.error('获取车次失败：', err)
