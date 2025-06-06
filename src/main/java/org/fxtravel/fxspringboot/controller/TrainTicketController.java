@@ -37,7 +37,7 @@ public class TrainTicketController {
     private TrainSeatService trainSeatService;
 
     // 按出发时间排序查询车次接口
-    @GetMapping("/search/by-departure-time")
+    @PostMapping("/search/by-departure-time")
     public ResponseEntity<?> searchTrainByDepartureTime(@Valid @RequestBody SearchTrainRequest request,
                                                         BindingResult bindingResult,
                                                         HttpSession session) {
@@ -45,7 +45,7 @@ public class TrainTicketController {
             List<String> errors = bindingResult.getFieldErrors()
                     .stream()
                     .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.badRequest().body(Map.of("errors", errors));
         }
 
@@ -81,7 +81,7 @@ public class TrainTicketController {
             List<String> errors = bindingResult.getFieldErrors()
                     .stream()
                     .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.toList());
+                    .toList();
             return ResponseEntity.badRequest().body(Map.of("errors", errors));
         }
 
