@@ -107,7 +107,7 @@ public class TrainSeatController {
     }
 
     // 更新座位接口
-    @PutMapping("/update/{seatId}")
+    @PostMapping("/update/{seatId}")
     public ResponseEntity<?> updateTrainSeat(@PathVariable Integer seatId,
                                              @Valid @RequestBody UpdateTrainSeatRequest request,
                                              BindingResult bindingResult,

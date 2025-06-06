@@ -8,13 +8,15 @@ spring:
     name: FXTravel
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/fxtravel_g14?serverTimezone=UTC
-    # url: jdbc:mysql://localhost:3306/fxtravel_g14?useSSL=false&serverTimezone=UTC&characterEncoding=utf-8&autoReconnect=true
+    # url: jdbc:mysql://localhost:3306/fxtravel_g14?serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/fxtravel_g14?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&autoReconnect=true
     username: 'root'
-    password: 'ehern030121'
+    # password: 'ss72ss05yy06'
+    password: 'yyyYYY&0121'
     hikari:
       username: 'root'
-      password: 'ehern030121'
+      # password: 'ss72ss05yy06'
+      password: 'yyyYYY&0121'
       driver-class-name: com.mysql.cj.jdbc.Driver
       maximum-pool-size: 3000
       minimum-idle: 10
@@ -38,3 +40,14 @@ spring:
           auth: true
           starttls:
             enable: true
+  graphql:
+    cors:
+      allow-credentials: true
+      allowed-headers: '*'
+      allowed-origins:
+        [
+          'http://localhost:5173/',
+          'http://10.193.185.196:5173/',
+          '*'
+              ]
+      allowed-methods: ['GET','POST','DELETE','PUT','OPTIONS']

@@ -78,7 +78,7 @@ public class TrainController {
         }
     }
 
-    @PutMapping("/admin/update/{trainId}")
+    @PostMapping("/admin/update/{trainId}")
     public ResponseEntity<?> updateTrain(@PathVariable Integer trainId,
                                          @RequestBody UpdateTrainRequest request,
                                          HttpSession session) {

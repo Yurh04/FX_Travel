@@ -1,17 +1,24 @@
 // vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import axios from "axios";
 
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 5173,   // 默认端口，可不改
+    host: true,
     proxy: {
-      // 任何以 /api 开头的请求都会被转发到 http://localhost:8080
-      '/api': {
-        target: 'http://127.0.0.1:8080',
+      '^/api': {  // 匹配所有以 /api 开头的请求
+        target: 'http://localhost:8080',  // 后端地址
         changeOrigin: true,
+        rewrite: (path) => path // 不需要重写路径（前后端路径一致）
       }
     }
   }
-})
+});
+
+// src/api/register.js
+const request = axios.create({
+  baseURL: '/api',  // 所有请求自动添加 /api 前缀
+  withCredentials: true  // 保持会话
+});

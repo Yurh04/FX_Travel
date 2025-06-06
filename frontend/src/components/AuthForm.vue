@@ -109,20 +109,22 @@ watch(() => props.type, () => {
 })
 
 const handleSubmit = async () => {
+  if (loading.value) return
+
   errorMessage.value = ''
   loading.value = true
 
   try {
     if (props.type === 'login') {
-      if (!username.value || !password.value) {
-        showError('请输入用户名和密码')
-        return
+      // 直接调用userStore.login（不再单独调用API）
+      const success = await userStore.login({
+        email: username.value,
+        password: password.value
+      })
+      if (success) {
+        emit('success', '登录成功')
+        await router.push('/train')
       }
-      const res = await login({ email: username.value, password: password.value })
-      userStore.login(res)
-      emit('success', '登录成功')
-      router.push('/train')
-
     } else if (props.type === 'register') {
       if (!email.value || !username.value || !password.value || !confirmPassword.value) {
         showError('请完整填写所有信息')
