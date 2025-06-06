@@ -3,12 +3,18 @@ package org.fxtravel.fxspringboot.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.fxtravel.fxspringboot.common.E_PaymentStatus;
+import org.fxtravel.fxspringboot.common.E_PaymentType;
 import org.fxtravel.fxspringboot.common.Role;
 import org.fxtravel.fxspringboot.pojo.dto.train.GetTicketRequest;
 import org.fxtravel.fxspringboot.pojo.dto.train.SearchTrainRequest;
 import org.fxtravel.fxspringboot.pojo.dto.train.TrainSearchResult;
 import org.fxtravel.fxspringboot.pojo.entities.TrainTicket;
 import org.fxtravel.fxspringboot.pojo.entities.User;
+import org.fxtravel.fxspringboot.pojo.entities.payment;
+import org.fxtravel.fxspringboot.service.impl.PaymentServiceImpl;
+import org.fxtravel.fxspringboot.service.inter.PaymentService;
+import org.fxtravel.fxspringboot.service.inter.TrainSeatService;
 import org.fxtravel.fxspringboot.service.inter.TrainTicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +31,10 @@ import org.springframework.validation.FieldError;
 public class TrainTicketController {
     @Autowired
     private TrainTicketService trainTicketService;
+    @Autowired
+    private PaymentService paymentService;
+    @Autowired
+    private TrainSeatService trainSeatService;
 
     // 按出发时间排序查询车次接口
     @GetMapping("/search/by-departure-time")
@@ -125,7 +135,16 @@ public class TrainTicketController {
         try {
             // 调用服务层生成车票
             TrainTicket ticket = trainTicketService.generateTicket(user, request.getTrainSeatId());
+            payment payment = paymentService.createPayment(
+                    user.getId(),
+                    E_PaymentType.TRAIN_TICKET,
+                    ticket.getTrainSeat().getPrice().doubleValue(),
+                    ticket.getId(),
+                    1,
+                    ticket.getTrainSeat().getId()
+            );
 
+            paymentService.simulatePaymentProcess(payment.getOrderNumber(), 30, () -> trainSeatService.checkAndGet(request.getTrainSeatId(),1));
             return ResponseEntity.ok(Map.of(
                     "message", "车票生成成功",
                     "ticket", ticket
@@ -140,33 +159,33 @@ public class TrainTicketController {
         }
     }
 
-    // 取消车票接口
-    @PutMapping("/ticket/cancel/{ticketId}")
-    public ResponseEntity<?> cancelTicket(@PathVariable Integer ticketId,
-                                          HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "未登录"));
-        }
-
-        try {
-            // 调用服务层取消车票
-            TrainTicket cancelledTicket = trainTicketService.cancelTicket(ticketId, user.getId());
-
-            return ResponseEntity.ok(Map.of(
-                    "message", "车票取消成功",
-                    "ticket", cancelledTicket,
-                    "refundAmount", cancelledTicket.getTrainSeat().getPrice()
-            ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "取消车票失败: " + e.getMessage()));
-        }
-    }
+//    // 取消车票接口
+//    @PutMapping("/ticket/cancel/{ticketId}")
+//    public ResponseEntity<?> cancelTicket(@PathVariable Integer ticketId,
+//                                          HttpSession session) {
+//        User user = (User) session.getAttribute("user");
+//        if (user == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "未登录"));
+//        }
+//
+//        try {
+//            // 调用服务层取消车票
+//            TrainTicket cancelledTicket = trainTicketService.cancelTicket(ticketId, user.getId());
+//
+//            return ResponseEntity.ok(Map.of(
+//                    "message", "车票取消成功",
+//                    "ticket", cancelledTicket,
+//                    "refundAmount", cancelledTicket.getTrainSeat().getPrice()
+//            ));
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+//        } catch (IllegalStateException e) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+//        } catch (SecurityException e) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(Map.of("error", "取消车票失败: " + e.getMessage()));
+//        }
+//    }
 }

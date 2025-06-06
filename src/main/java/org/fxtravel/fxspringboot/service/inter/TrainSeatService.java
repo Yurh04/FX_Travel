@@ -6,7 +6,7 @@ import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
 import java.math.BigDecimal;
 import java.util.List;
 
-public interface TrainSeatService {
+public interface TrainSeatService extends GoodService {
     public void addTrainSeat(Integer trainId, SeatType seatType, BigDecimal price, Integer available);
 
     public void deleteTrainSeat(Integer seatId);

@@ -38,8 +38,6 @@ public class TrainTicketServiceImp implements TrainTicketService {
         if (trainSeat.getAvailable() == 0){
             throw new IllegalStateException("Not enough balance for the ticket");
         }
-        trainSeat.setAvailable(trainSeat.getAvailable() - 1);
-        trainSeatRepository.save(trainSeat);
 
         TrainTicket trainTicket = new TrainTicket();
         trainTicket.setUser(user);
@@ -63,8 +61,6 @@ public class TrainTicketServiceImp implements TrainTicketService {
         if (trainSeat == null) {
             throw new IllegalStateException("TrainSeat not found");
         }
-        trainSeat.setAvailable(trainSeat.getAvailable() + 1);
-        trainSeatRepository.save(trainSeat);
 
         return trainTicket;
     }
