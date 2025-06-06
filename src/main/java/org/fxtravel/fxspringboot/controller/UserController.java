@@ -29,7 +29,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/userdata/update")
+    @PostMapping("/userdata/update")
     public ResponseEntity<?> updateUserData(HttpSession session, @RequestBody UpdateUserDataRequest request) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
@@ -40,7 +40,7 @@ public class UserController {
     }
 
     // 仅管理员可访问
-    @PutMapping("/grant")
+    @PostMapping("/grant")
     public ResponseEntity<?> grantAdminRole(HttpSession session, @RequestBody GrantAdminRequest request) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
