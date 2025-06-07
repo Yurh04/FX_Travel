@@ -9,12 +9,12 @@ import org.fxtravel.fxspringboot.event.EventCenter;
 import org.fxtravel.fxspringboot.event.EventType;
 import org.fxtravel.fxspringboot.event.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.PaymentMapper;
-import org.fxtravel.fxspringboot.mapper.TrainMealOrderMapper;
+import org.fxtravel.fxspringboot.mapper.trainmeal.TrainMealOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderDTO;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderQueryDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
-import org.fxtravel.fxspringboot.pojo.entities.train_meal;
-import org.fxtravel.fxspringboot.pojo.entities.train_meal_order;
+import org.fxtravel.fxspringboot.pojo.entities.trainmeal.TrainMeal;
+import org.fxtravel.fxspringboot.pojo.entities.trainmeal.TrainMealOrder;
 import org.fxtravel.fxspringboot.service.inter.common.PaymentService;
 import org.fxtravel.fxspringboot.service.inter.trainmeal.TrainMealOrderService;
 import org.fxtravel.fxspringboot.service.inter.trainmeal.TrainMealService;
@@ -32,9 +32,6 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
 
     @Autowired
     private TrainMealOrderMapper trainMealOrderMapper;
-
-    @Autowired
-    PaymentMapper paymentMapper;
 
     @Autowired
     private TrainMealService trainMealService;
@@ -63,41 +60,35 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
     }
 
     @Override
-    public train_meal_order getOrderById(Integer id) {
+    public TrainMealOrder getOrderById(Integer id) {
         return trainMealOrderMapper.selectById(id);
     }
 
     @Override
-    public List<train_meal_order> getOrdersByUserId(Integer userId) {
-        return trainMealOrderMapper.selectByUserId(userId);
+    public List<TrainMealOrder> getOrdersByUser(Integer userId) {
+        return trainMealOrderMapper.selectByUser(userId);
     }
 
     @Override
-    public List<train_meal_order> getOrdersByTicketReservationId(Integer ticketReservationId) {
-        return trainMealOrderMapper.selectByTicketReservationId(ticketReservationId);
+    public List<TrainMealOrder> getOrdersBySeatOrder(Integer seatOrderId) {
+        return trainMealOrderMapper.selectBySeatOrder(seatOrderId);
     }
 
     @Override
-    public List<train_meal_order> queryOrders(TrainMealOrderQueryDTO queryDTO) {
-        return trainMealOrderMapper.selectByConditionsDTO(queryDTO);
-    }
-
-    @Override
-    public train_meal_order createOrder(TrainMealOrderDTO orderDTO) {
+    public TrainMealOrder createOrder(TrainMealOrderDTO orderDTO) {
         // 1. 验证餐食信息
-        train_meal meal = trainMealService.getMealById(orderDTO.getTrainMealId());
+        TrainMeal meal = trainMealService.getMealById(orderDTO.getTrainMealId());
         if (meal == null || !meal.getEnabled()) {
             throw new RuntimeException("餐食不存在或已下架");
         }
-        // TODO 更多校验需要等待相关系统完成，暂时不管
 
         // 2. 计算总金额
         Double totalAmount = meal.getPrice() * orderDTO.getQuantity();
 
         // 3. 创建订单实体
-        train_meal_order order = new train_meal_order();
+        TrainMealOrder order = new TrainMealOrder();
         order.setUserId(orderDTO.getUserId());
-        order.setTicketReservationId(orderDTO.getTicketReservationId());
+        order.setSeatOrderNumber(orderDTO.getTicketReservationId());
         order.setTrainMealId(orderDTO.getTrainMealId());
         order.setQuantity(orderDTO.getQuantity());
         order.setTotalAmount(totalAmount);
@@ -125,5 +116,10 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
                 () -> null);
 
         return order;
+    }
+
+    @Override
+    public boolean existsBySeatOrder(Integer seatOrderId) {
+        return trainMealOrderMapper.existsBySeatOrderId(seatOrderId);
     }
 }

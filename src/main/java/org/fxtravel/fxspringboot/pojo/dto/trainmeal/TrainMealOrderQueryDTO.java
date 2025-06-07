@@ -11,19 +11,14 @@ import java.time.LocalDateTime;
 public class TrainMealOrderQueryDTO {
     @Nullable
     private Integer userId;
-
     @Nullable
     private Integer ticketReservationId;
-
     @Nullable
     private Integer trainMealId;
-
     @Nullable
     private E_PaymentStatus status;
-
     @Nullable
     private LocalDateTime createTimeStart;
-
     @Nullable
     private LocalDateTime createTimeEnd;
 }

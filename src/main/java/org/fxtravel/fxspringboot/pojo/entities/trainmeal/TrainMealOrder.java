@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.pojo.entities;
+package org.fxtravel.fxspringboot.pojo.entities.trainmeal;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class train_meal_order {
+@Table(name = "train_meal_order")
+public class TrainMealOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -22,7 +23,7 @@ public class train_meal_order {
     @Column(nullable = false)
     private Integer userId; // 用户ID
     @Column(nullable = false)
-    private Integer ticketReservationId; // 车票预购表ID
+    private Integer seatOrderNumber; // 车票预购表ID
     @Column(nullable = false)
     private Integer trainMealId; // 列车餐食ID
     private Integer relatedPaymentId; // 支付模拟系统相关

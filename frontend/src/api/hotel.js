@@ -16,6 +16,8 @@ export const doAsync = (orderId) => request().get('/hotel', { params: orderId} )
 
 export const getOrderRooms = (userId) => request().get('/hotel/orders', { params: userId} )
 
+export const refundRoom = (params) => request().post('/hotel/refund', {params: params} )
+
 export function advancedSearch(filters) {
   return client.post('/hotels/search', filters)
 }
