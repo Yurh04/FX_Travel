@@ -1,4 +1,4 @@
-<!-- 文件：src/components/TrainCard.vue -->
+<!-- src/components/TrainCard.vue -->
 <template>
   <div class="train-card">
     <div class="train-header">
@@ -33,6 +33,7 @@
         </li>
       </ul>
     </div>
+
     <div v-else class="no-seat">
       暂无座位信息
     </div>
@@ -41,6 +42,8 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { startPayment } from '../api/train'
 
 const props = defineProps({
   train: {
@@ -55,29 +58,54 @@ const props = defineProps({
 
 const router = useRouter()
 
-function bookSeat(seatItem) {
-  router.push({
-    name: 'TrainBooking',
-    query: {
-      trainId: props.train.trainNumber,
-      from: props.train.fromStation,
-      to: props.train.toStation,
-      departTime: props.train.departureTime,
-      arriveTime: props.train.arrivalTime,
-      seat: seatItem.seatType,
-      price: seatItem.price
+async function bookSeat(seatItem) {
+  const payload = {
+    trainId: props.train.trainNumber,
+    from: props.train.fromStation,
+    to: props.train.toStation,
+    departTime: props.train.departureTime,
+    arriveTime: props.train.arrivalTime,
+    seatType: seatItem.seatType,
+    seatId: seatItem.id,
+    price: seatItem.price
+  }
+
+  try {
+    const { data } = await startPayment(payload)
+    // data = { id: 1665441794, number: 'A01', message: '车票生成成功', seat: 'A01' }
+
+    if (data.message) {
+      ElMessage.success(data.message)
     }
-  })
+    // 后端把票号返回在 number 字段里
+    const orderNumber = data.number
+    if (!orderNumber) {
+      ElMessage.error('下单失败：未获取票号')
+      return
+    }
+
+    router.push({
+      name: 'TrainBooking',
+      query: {
+        ...payload,
+        orderNumber
+      }
+    })
+  } catch (err) {
+    console.error('startPayment 异常：', err)
+    const msg = err.response?.data?.message || '下单失败，请稍后重试'
+    ElMessage.error(msg)
+  }
 }
 
 function formatDateTime(isoString) {
   if (!isoString) return ''
-  const date = new Date(isoString)
-  const Y = date.getFullYear()
-  const M = String(date.getMonth() + 1).padStart(2, '0')
-  const D = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const m = String(date.getMinutes()).padStart(2, '0')
+  const d = new Date(isoString)
+  const Y = d.getFullYear()
+  const M = String(d.getMonth() + 1).padStart(2, '0')
+  const D = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
   return `${Y}-${M}-${D} ${h}:${m}`
 }
 </script>
