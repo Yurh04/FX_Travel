@@ -15,3 +15,21 @@ export const bookRoom = (params) => request.post('/hotel/room/get', params)
 export const doAsync = (orderId) => request().get('/hotel', { params: orderId} )
 
 export const getOrderRooms = (userId) => request().get('/hotel/orders', { params: userId} )
+
+export function advancedSearch(filters) {
+  return client.post('/hotels/search', filters)
+}
+export function fetchHotelDetail(id) {
+  return client.get(`/hotels/${id}`)
+}
+export function createBooking(bookingData) {
+  return client.post('/hotel_bookings', bookingData)
+}
+
+
+export default {
+  searchHotels,
+  advancedSearch,
+  fetchHotelDetail,
+  createBooking,
+}
