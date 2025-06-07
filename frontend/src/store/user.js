@@ -1,19 +1,20 @@
 // src/store/user.js
-import { defineStore } from 'pinia'
-import {
-    login as apiLogin,
-    logout as apiLogout,
-    getCurrentUser as apiGetCurrentUser,
-} from '../api/register'
+import {defineStore} from 'pinia'
+import {getCurrentUser as apiGetCurrentUser, login as apiLogin, logout as apiLogout,} from '../api/register'
 
 export const useUserStore = defineStore('user', {
     state: () => ({
         // 登录状态
         isLoggedIn: false,
         // 当前用户信息（从后端 /user/userdata 拉取）
-        userInfo: null,
-        // 可选：保存登录过程中出现的错误消息
-        errorMsg: '',
+        userInfo: {
+            id: null,
+            email: '',
+            username: '',
+            verified: false,
+            gender: '',
+            role: ''
+        }
     }),
 
     actions: {
@@ -30,15 +31,11 @@ export const useUserStore = defineStore('user', {
                 })
 
                 // 登录成功后，从后端 /user/userdata 获取用户信息
-                const res = await apiGetCurrentUser()
-                // 假设后端返回格式为 { code: 0, data: { id, name, ... } }
-                this.userInfo = res.data
-                this.isLoggedIn = true
-                this.errorMsg = ''
+                await this.fetchCurrentUser()
+                console.log("login success")
                 return true
             } catch (err) {
                 // 捕获后端返回的错误信息
-                this.errorMsg = err.response?.data?.error || '登录失败'
                 this.isLoggedIn = false
                 this.userInfo = null
                 return false
@@ -51,13 +48,13 @@ export const useUserStore = defineStore('user', {
         async logout() {
             try {
                 await apiLogout()
+                console.log("logout success")
             } catch (err) {
                 // 即使后端出错，也继续清除本地状态
                 console.warn('后端登出失败，但本地状态仍会清空：', err)
             }
             this.isLoggedIn = false
             this.userInfo = null
-            this.errorMsg = ''
         },
 
         /**
@@ -65,10 +62,10 @@ export const useUserStore = defineStore('user', {
          */
         async fetchCurrentUser() {
             try {
-                const res = await apiGetCurrentUser()
-                this.userInfo = res.data
+                this.userInfo = (await apiGetCurrentUser()).data
                 this.isLoggedIn = true
-                this.errorMsg = ''
+                console.log("fetchCurrentUser")
+                console.log(this.userInfo)
             } catch (err) {
                 // 取不到用户信息，就认为未登录
                 this.isLoggedIn = false
@@ -78,7 +75,16 @@ export const useUserStore = defineStore('user', {
     },
 
     getters: {
-        // 方便在组件里直接取用户名
-        username: (state) => (state.userInfo ? state.userInfo.name : ''),
+        // 获取当前登录状态
+        loggedIn: (state) => state.isLoggedIn,
+
+        // 获取当前用户信息
+        currentUser: (state) => state.userInfo,
+
+        // 获取用户名（假设userInfo中有username字段）
+        username: (state) => state.userInfo?.username || '',
+
+        // 获取用户邮箱（假设userInfo中有email字段）
+        email: (state) => state.userInfo?.email || '',
     },
 })

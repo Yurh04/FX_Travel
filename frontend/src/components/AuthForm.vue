@@ -37,6 +37,17 @@
         @input="clearError"
     />
 
+    <div v-if="showField('gender')" class="gender-options">
+      <label class="gender-option">
+        <input type="radio" v-model="gender" value="MALE" />
+        男
+      </label>
+      <label class="gender-option">
+        <input type="radio" v-model="gender" value="FEMALE" />
+        女
+      </label>
+    </div>
+
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
     <button class="action-btn" :disabled="loading" @click="handleSubmit">
@@ -47,7 +58,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { login, register, forgotPassword } from '../api/register'
+import { login, register } from '../api/register'
 import { useUserStore } from '../store/user'
 import { useRouter } from 'vue-router'
 
@@ -61,26 +72,24 @@ const email = ref('')
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const gender = ref('OTHER')
 const errorMessage = ref('')
 const loading = ref(false)
 let errorTimer = null
 
 const titleMap = {
   login: '账号密码登录',
-  register: '欢迎加入 👋',
-  forget: '找回密码'
+  register: '欢迎加入 👋'
 }
 const buttonTextMap = {
   login: '登 录',
-  register: '注 册',
-  forget: '发送重置链接'
+  register: '注 册'
 }
 
 const showField = (field) => {
   const fieldsMap = {
     login: ['username', 'password'],
-    register: ['email', 'username', 'password', 'confirmPassword'],
-    forget: ['email']
+    register: ['email', 'username', 'password', 'confirmPassword', 'gender']
   }
   return fieldsMap[props.type].includes(field)
 }
@@ -138,18 +147,10 @@ const handleSubmit = async () => {
         email: email.value,
         userName: username.value,
         password: password.value,
-        gender: 'OTHER',
+        gender: gender.value,
         role: 'USER'
       })
       emit('success', '注册成功')
-
-    } else if (props.type === 'forget') {
-      if (!email.value) {
-        showError('请输入注册邮箱')
-        return
-      }
-      await forgotPassword(email.value)
-      emit('success', '重置链接已发送至邮箱，请查收')
     }
   } catch (err) {
     showError(err?.response?.data?.error || '操作失败，请检查信息')
@@ -215,5 +216,19 @@ const handleSubmit = async () => {
 .action-btn:disabled {
   background-color: #999;
   cursor: not-allowed;
+}
+.gender-options {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  width: 80%;
+  max-width: 300px;
+}
+.gender-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
 }
 </style>

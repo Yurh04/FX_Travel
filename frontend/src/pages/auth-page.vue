@@ -19,10 +19,6 @@
               :class="{ active: activeTab === 'register' }"
               @click="activeTab = 'register'"
           >注册</button>
-          <button
-              :class="{ active: activeTab === 'forget' }"
-              @click="activeTab = 'forget'"
-          >忘记密码</button>
         </div>
 
         <!-- 表单组件 -->
