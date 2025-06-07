@@ -19,13 +19,15 @@
     <!-- 城市与日期选择 -->
     <div class="form-row">
       <!-- 出发城市 -->
-      <div class="form-box" @click.stop="activeField = 'from'">
+      <div class="form-box" @click="toggleCitySelect('from')">
         <div class="label">出发城市</div>
         <div class="value">{{ fromCity || '请选择' }}</div>
         <transition name="fade">
           <CitySelect
               v-if="activeField === 'from'"
-              @select="selectCity('from', $event)"
+              @select="selectCity"
+              @close="closeCitySelect"
+              field="from"
           />
         </transition>
       </div>
@@ -34,13 +36,15 @@
       <button class="swap-btn" @click="swapCities">⇄</button>
 
       <!-- 到达城市 -->
-      <div class="form-box" @click.stop="activeField = 'to'">
+      <div class="form-box" @click="toggleCitySelect('to')">
         <div class="label">到达城市</div>
         <div class="value">{{ toCity || '请选择' }}</div>
         <transition name="fade">
           <CitySelect
-              v-if="activeField === 'to'"
-              @select="selectCity('to', $event)"
+                v-if="activeField === 'to'"
+                @select="selectCity"
+                @close="closeCitySelect"
+                field="to"
           />
         </transition>
       </div>
@@ -96,6 +100,20 @@ watchEffect(() => {
   if (props.tripType) tripType.value = props.tripType
 })
 
+// 切换城市选择器显示/隐藏
+const toggleCitySelect = (field) => {
+  if (activeField.value === field) {
+    activeField.value = null
+  } else {
+    activeField.value = field
+  }
+}
+
+// 关闭城市选择器
+const closeCitySelect = () => {
+  activeField.value = null
+}
+
 // 交换城市
 const swapCities = () => {
   const tmp = fromCity.value
@@ -104,12 +122,16 @@ const swapCities = () => {
 }
 
 // 选中城市后：更新对应值，并关闭弹窗
-const selectCity = (field, city) => {
-  if (field === 'from') fromCity.value = city
-  else toCity.value = city
-
-  // 关闭 CitySelect 弹窗
-  activeField.value = null
+const selectCity = (data) => {
+  const { field, city } = data
+  if (field === 'from') {
+    fromCity.value = city
+  } else if (field === 'to') {
+    toCity.value = city
+  }
+  
+  // 关闭城市选择器
+  closeCitySelect()
 }
 
 // 点击搜索按钮，携带参数跳转到结果页
@@ -132,16 +154,18 @@ const handleSearch = () => {
 
 // 点击空白区域关闭弹窗
 const handleClickOutside = (e) => {
-  if (!e.target.closest('.form-box')) {
+  // 检查点击的元素是否在城市选择器内部
+  if (!e.target.closest('.city-select-popup') && !e.target.closest('.form-box')) {
     activeField.value = null
   }
 }
 
 onMounted(() => {
-  window.addEventListener('click', handleClickOutside)
+  document.addEventListener('click', handleClickOutside)
 })
+
 onBeforeUnmount(() => {
-  window.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 

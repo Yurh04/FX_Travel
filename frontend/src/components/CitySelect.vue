@@ -1,7 +1,10 @@
 <!-- CitySelect.vue -->
 <template>
-  <div class="city-select-popup">
-    <div class="city-select-header">热门城市</div>
+  <div class="city-select-popup" @click.stop>
+    <div class="city-select-header">
+      <span>热门城市</span>
+      <button class="close-btn" @click="handleClose">×</button>
+    </div>
     <div class="city-grid">
       <span
           v-for="city in hotCities"
@@ -15,15 +18,27 @@
 </template>
 
 <script setup>
+const props = defineProps({
+  field: {
+    type: String,
+    required: true
+  }
+})
+
 const hotCities = [
   '北京', '上海', '广州', '深圳', '杭州', '成都',
   '重庆', '南京', '武汉', '西安', '郑州', '长沙'
 ]
 
-// 发出选中事件，父组件收到后会隐藏弹窗
-const emit = defineEmits(['select'])
+// 发出选中事件和关闭事件
+const emit = defineEmits(['select', 'close'])
+
 function handleSelect(city) {
-  emit('select', city)
+  emit('select', { field: props.field, city })
+}
+
+function handleClose() {
+  emit('close')
 }
 </script>
 
@@ -44,12 +59,36 @@ function handleSelect(city) {
 }
 
 .city-select-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-weight: 600;
   font-size: 16px;
   color: #444;
   margin-bottom: 16px;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 6px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+  color: #666;
 }
 
 .city-grid {
