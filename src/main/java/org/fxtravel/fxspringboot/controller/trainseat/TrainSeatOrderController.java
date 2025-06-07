@@ -38,23 +38,23 @@ public class TrainSeatOrderController {
     public ResponseEntity<?> getTicket(@Valid @RequestBody GetTicketRequest request,
                                        BindingResult bindingResult,
                                        HttpSession session) {
-//        if (bindingResult.hasErrors()) {
-//            List<String> errors = bindingResult.getFieldErrors()
-//                    .stream()
-//                    .map(FieldError::getDefaultMessage)
-//                    .toList();
-//            return ResponseEntity.badRequest().body(Map.of("errors", errors));
-//        }
-//
-//        User user = (User) session.getAttribute("user");
-//        if (user == null) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "未登录"));
-//        }
-//
-//        // 验证用户只能为自己生成车票（除非是管理员）
-//        if (!user.getRole().equals(Role.ADMIN) && user.getId() != (request.getUserId())) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "无权限为其他用户生成车票"));
-//        }
+        if (bindingResult.hasErrors()) {
+            List<String> errors = bindingResult.getFieldErrors()
+                    .stream()
+                    .map(FieldError::getDefaultMessage)
+                    .toList();
+            return ResponseEntity.badRequest().body(Map.of("errors", errors));
+        }
+
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "未登录"));
+        }
+
+        // 验证用户只能为自己生成车票（除非是管理员）
+        if (!user.getRole().equals(Role.ADMIN) && user.getId() != (request.getUserId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "无权限为其他用户生成车票"));
+        }
 
         try {
             TrainSeatOrder order = trainSeatOrderService.createOrder(request);
