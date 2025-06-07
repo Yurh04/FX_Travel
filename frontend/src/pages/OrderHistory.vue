@@ -179,7 +179,7 @@ const copyMeal = meal => {
 // 跳转到订餐页面
 function goToMeal(trainNumber) {
   router.push({
-    name: 'MealOrder',
+    name: 'TrainMeal',       // ← 跟 router/index.js 里定义的 name 一模一样
     query: { trainId: trainNumber }
   })
 }
