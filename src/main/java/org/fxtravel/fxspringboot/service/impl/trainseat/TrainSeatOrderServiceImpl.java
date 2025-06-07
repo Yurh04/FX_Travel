@@ -91,7 +91,7 @@ public class TrainSeatOrderServiceImpl implements TrainSeatOrderService {
                 1,
                 order.getTrainSeatId()
         );
-        paymentMapper.insert(payment);
+
         order.setRelatedPaymentId(payment.getId());
         trainSeatOrderMapper.insert(order);
 

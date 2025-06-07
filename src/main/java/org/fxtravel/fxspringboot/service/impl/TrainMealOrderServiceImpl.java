@@ -114,7 +114,6 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
                 order.getQuantity(),
                 order.getTrainMealId()
         );
-        paymentMapper.insert(payment);
         order.setRelatedPaymentId(payment.getId());
         trainMealOrderMapper.insert(order);
 
