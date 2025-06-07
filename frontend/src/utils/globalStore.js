@@ -10,12 +10,6 @@ export const initGlobalStore = (app) => {
     if (app) {
         // 首次初始化
         _userStore = useUserStore()
-
-        // 开发环境调试
-        if (process.env.NODE_ENV === 'development') {
-            window.__userStore = _userStore
-            console.debug('Global store mounted to window.__userStore')
-        }
     }
 
     if (!_userStore) throw new Error('Store 未初始化')

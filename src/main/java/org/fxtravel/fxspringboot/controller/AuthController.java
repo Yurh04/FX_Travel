@@ -18,11 +18,13 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerAccount(@RequestBody RegisterRequest request) {
-        boolean success = userService.register(request.getEmail(), request.getPassword());
+    public ResponseEntity<?> registerAccount(@RequestBody RegisterRequest request, HttpSession session) {
+        User user = userService.register(request);
 
-        if (success) {
-            return ResponseEntity.ok(Map.of("message", "注册成功，请查收验证邮件"));
+        session.setAttribute("user", user);
+
+        if (user != null) {
+            return ResponseEntity.ok(Map.of("message", "注册成功"));
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "邮箱已注册"));
         }

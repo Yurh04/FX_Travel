@@ -1,17 +1,15 @@
 package org.fxtravel.fxspringboot.service.inter;
 
 import org.fxtravel.fxspringboot.common.Gender;
+import org.fxtravel.fxspringboot.pojo.dto.user.RegisterRequest;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public interface UserService {
     /**
      * 根据邮箱和密码注册用户账号
-     * @param email 用户邮箱
-     * @param password 用户密码
-     * @return 是否注册成功
      */
-    public boolean register(String email, String password);
+    public User register(RegisterRequest request);
 
     public boolean verifyCode(String code);
 

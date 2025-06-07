@@ -3,6 +3,11 @@
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { storeToRefs } from 'pinia' // 新增
+import {onMounted} from "vue";
+
+onMounted(() => {
+  console.log('LoginNotice detect user:', loggedIn.value);
+})
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -16,7 +21,7 @@ const goAuth = () => {
 
 const handleLogout = async () => {
   try {
-    await userStore.logout()
+    userStore.logout().then(r => router.push({name: 'Authentication'}))
   } catch (error) {
     console.error('登出失败:', error)
   }

@@ -23,23 +23,7 @@
           <span class="site-name">风行旅行</span>
         </div>
         <div class="nav-actions">
-          <!-- 未登录状态 -->
-          <template v-if="!isLoggedIn">
-            <button class="nav-btn" @click="go('/auth')">登录 / 注册</button>
-          </template>
-
-          <!-- 已登录状态 -->
-          <template v-else>
-            <div class="user-info" @click="toggleDropdown">
-              <img class="avatar" :src="avatarUrl" alt="头像" />
-              <span class="nickname">{{ username }}</span>
-              <i class="iconfont">&#xe6a7;</i>
-              <div v-if="dropdownVisible" class="dropdown">
-                <div class="dropdown-item" @click="go('/orders')">我的订单</div>
-                <div class="dropdown-item" @click="logout">退出登录</div>
-              </div>
-            </div>
-          </template>
+          <LoginNotice />
 
           <button class="nav-btn" @click="go('/contact')">联系客服</button>
           <button class="nav-btn" @click="go('/aboutUs')">关于我们</button>
@@ -113,7 +97,7 @@
         <section class="train-hotline-section">
           <h2 class="section-title">热门路线</h2>
           <div class="city-tabs">
-            <!-- “上海”和“北京”按钮始终可见 -->
+            <!-- "上海"和"北京"按钮始终可见 -->
             <button
                 v-for="city in originCities"
                 :key="city"
@@ -152,10 +136,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import TopSearchBar from '../components/TopSearchBar.vue'
+import LoginNotice from '../components/LoginNotice.vue' // 新增导入
 import { searchByDepartureTime } from '../api/train'
 
 const route = useRoute()
@@ -180,35 +164,7 @@ const goSearch = (item) => {
   })
 }
 
-const dropdownVisible = ref(false)
-const toggleDropdown = () => (dropdownVisible.value = !dropdownVisible.value)
-
-const username = ref('未登录')
-const isLoggedIn = ref(false)
-const avatarUrl = ref('../assets/default-avatar.png')
-
-const logout = () => {
-  localStorage.removeItem('username')
-  localStorage.removeItem('avatar')
-  isLoggedIn.value = false
-  username.value = '未登录'
-  avatarUrl.value = '/images/default-avatar.png'
-  dropdownVisible.value = false
-  ElMessage.success('已退出登录')
-  go('/auth')
-}
-
-onMounted(() => {
-  const name = localStorage.getItem('username')
-  const avatar = localStorage.getItem('avatar')
-  if (name) {
-    username.value = name
-    isLoggedIn.value = true
-    if (avatar) avatarUrl.value = avatar
-  }
-  // 默认选中第一个出发地
-  selectOrigin(originCities[0])
-})
+// 删除原有的登录状态相关逻辑，因为现在由 LoginNotice 组件管理
 
 /** 服务保障数据（示例） */
 const services = ref([
@@ -413,8 +369,6 @@ watch(activeOrigin, () => {
   width: 100%;
   height: 300px;
   background: url('../assets/train.png') center/cover no-repeat;
-  //background-size: cover;
-  //background-position: center;
 }
 
 .banner-img {

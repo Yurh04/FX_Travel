@@ -72,7 +72,7 @@ const email = ref('')
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const gender = ref('OTHER')
+const gender = ref('MALE')
 const errorMessage = ref('')
 const loading = ref(false)
 let errorTimer = null
@@ -132,10 +132,10 @@ const handleSubmit = async () => {
       })
       if (success) {
         emit('success', '登录成功')
-        await router.push('/train')
+        await router.push({name : 'train'})
       }
     } else if (props.type === 'register') {
-      if (!email.value || !username.value || !password.value || !confirmPassword.value) {
+      if (!email.value || !username.value || !password.value || !confirmPassword.value || !gender.value) {
         showError('请完整填写所有信息')
         return
       }
@@ -143,14 +143,19 @@ const handleSubmit = async () => {
         showError('两次密码不一致')
         return
       }
-      await register({
+      const success =  await userStore.register({
         email: email.value,
-        userName: username.value,
+        username: username.value,
         password: password.value,
         gender: gender.value,
-        role: 'USER'
+        role: 'REGULAR'
       })
-      emit('success', '注册成功')
+      if (success) {
+        emit('success', '注册成功')
+        await router.push({name: 'train'})
+      } else {
+        emit('error', '注册失败')
+      }
     }
   } catch (err) {
     showError(err?.response?.data?.error || '操作失败，请检查信息')

@@ -4,11 +4,13 @@ import org.fxtravel.fxspringboot.common.Gender;
 import org.fxtravel.fxspringboot.common.Role;
 import org.fxtravel.fxspringboot.mapper.UserMapper;
 import org.fxtravel.fxspringboot.mapper.VerificationMapper;
+import org.fxtravel.fxspringboot.pojo.dto.user.RegisterRequest;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.pojo.entities.VerificationCode;
 import org.fxtravel.fxspringboot.service.inter.MailService;
 import org.fxtravel.fxspringboot.service.inter.UserService;
 import org.fxtravel.fxspringboot.service.inter.VerificationService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,23 +31,24 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private VerificationService verificationService;
     @Override
-    public boolean register(String email, String password) {
-
-        if (userMapper.existsByEmail(email)) {
-            return false;
+    public User register(RegisterRequest request) {
+        if (userMapper.existsByEmail(request.getEmail())) {
+            return null;
         }
+        System.out.println(request);
 
         User user = new User();
-        user.setEmail(email);
-        user.setPassword(password);
-        userMapper.insertUser(user);
+        BeanUtils.copyProperties(request, user);
+        user.setVerified(true);
+        userMapper.insert(user);
+
         //发送验证邮件
-        String code = UUID.randomUUID().toString();
-        mailService.sendVerificationEmail(email, code, "注册验证邮件");
+//        String code = UUID.randomUUID().toString();
+//        mailService.sendVerificationEmail(request.getEmail(), code, "注册验证邮件");
+//
+//        verificationService.save(code,user.getId());
 
-        verificationService.save(code,user.getId());
-
-        return true;
+        return user;
     }
 
     @Override

@@ -1,6 +1,10 @@
 // src/store/user.js
 import {defineStore} from 'pinia'
-import {getCurrentUser as apiGetCurrentUser, login as apiLogin, logout as apiLogout,} from '../api/register'
+import {getCurrentUser as apiGetCurrentUser,
+    login as apiLogin,
+    logout as apiLogout,
+    register as apiRegister,
+} from '../api/register'
 
 export const useUserStore = defineStore('user', {
     state: () => ({
@@ -36,8 +40,32 @@ export const useUserStore = defineStore('user', {
                 return true
             } catch (err) {
                 // 捕获后端返回的错误信息
-                this.isLoggedIn = false
-                this.userInfo = null
+                this.resetState()
+                return false
+            }
+        },
+
+        /**
+         * 1.5. 注册
+         */
+        async register(payload) {
+            try {
+                // 调用后端 /auth/login（HttpSession + Cookie）
+                await apiRegister({
+                    email: payload.email,
+                    username: payload.username,
+                    password: payload.password,
+                    gender: payload.gender,
+                    role: payload.role,
+                })
+
+                // 注册成功后，从后端 /user/userdata 获取用户信息
+                await this.fetchCurrentUser()
+                console.log("register success")
+                return true
+            } catch (err) {
+                // 捕获后端返回的错误信息
+                this.resetState()
                 return false
             }
         },
@@ -53,8 +81,7 @@ export const useUserStore = defineStore('user', {
                 // 即使后端出错，也继续清除本地状态
                 console.warn('后端登出失败，但本地状态仍会清空：', err)
             }
-            this.isLoggedIn = false
-            this.userInfo = null
+            this.resetState()
         },
 
         /**
@@ -66,10 +93,41 @@ export const useUserStore = defineStore('user', {
                 this.isLoggedIn = true
                 console.log("fetchCurrentUser")
                 console.log(this.userInfo)
+                localStorage.setItem("userStore", JSON.stringify(
+                    {
+                        isLoggedIn: this.isLoggedIn,
+                        userInfo: this.userInfo,
+                    }))
+                console.log("user saved")
             } catch (err) {
                 // 取不到用户信息，就认为未登录
-                this.isLoggedIn = false
-                this.userInfo = null
+                this.resetState()
+            }
+        },
+
+        // 新增：重置状态的辅助方法
+        resetState() {
+            this.isLoggedIn = false
+            this.userInfo = {
+                id: null,
+                email: '',
+                username: '',
+                verified: false,
+                gender: '',
+                role: ''
+            }
+            localStorage.removeItem('userStore')
+        },
+
+        // 新增：从 localStorage 初始化状态
+        initializeFromStorage() {
+            const savedState = localStorage.getItem('userStore')
+            console.log("get savedState")
+            console.log(savedState)
+            if (savedState) {
+                const { isLoggedIn, userInfo } = JSON.parse(savedState)
+                this.isLoggedIn = isLoggedIn
+                this.userInfo = userInfo
             }
         },
     },
