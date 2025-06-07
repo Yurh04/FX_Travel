@@ -9,8 +9,8 @@
         <p><strong>车次：</strong>{{ trainId }}</p>
         <p><strong>出发城市：</strong>{{ from }}</p>
         <p><strong>到达城市：</strong>{{ to }}</p>
-        <p><strong>出发时间：</strong>{{ departTime }}</p>
-        <p><strong>到达时间：</strong>{{ arriveTime }}</p>
+        <p><strong>出发时间：</strong>{{ formatDateTime(departTime) }}</p>
+        <p><strong>到达时间：</strong>{{ formatDateTime(arriveTime) }}</p>
         <p><strong>座席：</strong>{{ seat }}</p>
         <p><strong>票价：</strong>{{ price }} 元</p>
       </div>
@@ -34,19 +34,33 @@ import { ElMessage } from 'element-plus'
 const route = useRoute()
 const router = useRouter()
 
-const trainId = ref(route.query.trainId || '未知')
-const from = ref(route.query.from || '未知')
-const to = ref(route.query.to || '未知')
-const departTime = ref(route.query.departTime || '--:--')
-const arriveTime = ref(route.query.arriveTime || '--:--')
-const seat = ref(route.query.seat || '无座')
-const price = ref(route.query.price || 200)
+// 从路由 query 里拿参数
+const trainId    = ref(route.query.trainId || '未知')
+const from       = ref(route.query.from       || '未知')
+const to         = ref(route.query.to         || '未知')
+const departTime = ref(route.query.departTime || '')
+const arriveTime = ref(route.query.arriveTime || '')
+const seat       = ref(route.query.seat       || '无座')
+const price      = ref(route.query.price      || 0)
 
+// 支付成功后跳转
 const processPayment = () => {
   ElMessage.success('支付成功！')
   setTimeout(() => {
     router.push({ name: 'BookingSuccess' })
   }, 1200)
+}
+
+// 格式化显示 ISO 时间
+function formatDateTime(isoString) {
+  if (!isoString) return '--:--'
+  const date = new Date(isoString)
+  const Y = date.getFullYear()
+  const M = String(date.getMonth() + 1).padStart(2, '0')
+  const D = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const m = String(date.getMinutes()).padStart(2, '0')
+  return `${Y}-${M}-${D} ${h}:${m}`
 }
 </script>
 

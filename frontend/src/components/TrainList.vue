@@ -1,16 +1,15 @@
+<!-- 文件：src/components/TrainList.vue -->
 <template>
   <div class="train-list">
-    <transition name="fade" mode="out-in">
-      <div v-if="trains.length === 0" class="no-result">
-        🚄 暂无匹配的车次
-      </div>
-    </transition>
-
-    <div class="train-list-wrapper">
+    <div v-if="trains.length === 0" class="no-result">
+      🚄 暂无匹配的车次
+    </div>
+    <div v-else class="train-list-wrapper">
       <TrainCard
-          v-for="train in trains"
-          :key="train.trainId"
-          :train="train"
+          v-for="item in trains"
+          :key="item.train.id"
+          :train="item.train"
+          :seats="item.trainSeats"
           class="train-item"
       />
     </div>
@@ -55,15 +54,5 @@ defineProps({
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   margin-top: 16px;
-}
-
-/* 过渡动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.4s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

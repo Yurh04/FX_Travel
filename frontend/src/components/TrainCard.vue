@@ -1,30 +1,40 @@
 <!-- 文件：src/components/TrainCard.vue -->
 <template>
   <div class="train-card">
-    <!-- 左侧基本信息 -->
-    <div class="info-left">
-      <div class="train-id">{{ train.trainId }}</div>
-      <div class="stations">
-        <span class="depart">{{ train.departStation }}</span>
-        <span class="arrow">→</span>
-        <span class="arrive">{{ train.arriveStation }}</span>
-      </div>
-      <div class="time-range">
-        <span>{{ train.departTime }} - {{ train.arriveTime }}</span>
-        <span class="duration">历时 {{ train.duration }}</span>
-      </div>
+    <div class="train-header">
+      <span class="train-id">车次：{{ train.trainNumber }}</span>
+      <span class="train-type">类型：{{ train.trainType }}</span>
     </div>
 
-    <!-- 右侧票务信息 -->
-    <div class="info-right">
-      <div class="seat">{{ train.seat }}</div>
-      <div class="type">{{ typeLabel }}</div>
-      <div class="status" :class="train.available ? 'available' : 'unavailable'">
-        {{ train.available ? '有票' : '无票' }}
-      </div>
-      <button class="book-btn" @click="goToBooking" :disabled="!train.available">
-        立即预订
-      </button>
+    <div class="train-stations">
+      <span>{{ train.fromStation }} → {{ train.toStation }}</span>
+    </div>
+
+    <div class="train-times">
+      <span>出发：{{ formatDateTime(train.departureTime) }}</span>
+      <span>到达：{{ formatDateTime(train.arrivalTime) }}</span>
+      <span>历时：{{ train.durationMinutes }} 分钟</span>
+    </div>
+
+    <div v-if="seats && seats.length" class="seat-info">
+      <h4>座位 & 票价：</h4>
+      <ul>
+        <li v-for="seatItem in seats" :key="seatItem.id" class="seat-item">
+          <span>
+            {{ seatItem.seatType }} – ¥{{ seatItem.price }} – 剩余：{{ seatItem.available }}
+          </span>
+          <button
+              class="book-btn"
+              @click="bookSeat(seatItem)"
+              :disabled="seatItem.available === 0"
+          >
+            {{ seatItem.available > 0 ? '预订' : '售罄' }}
+          </button>
+        </li>
+      </ul>
+    </div>
+    <div v-else class="no-seat">
+      暂无座位信息
     </div>
   </div>
 </template>
@@ -33,129 +43,114 @@
 import { useRouter } from 'vue-router'
 
 const props = defineProps({
-  train: Object
+  train: {
+    type: Object,
+    required: true
+  },
+  seats: {
+    type: Array,
+    default: () => []
+  }
 })
 
 const router = useRouter()
 
-const typeLabelMap = {
-  'G/C': '高铁',
-  'D': '动车',
-  'Z/T/K': '普通列车',
-  'L/Y': '其他'
-}
-
-const typeLabel = typeLabelMap[props.train.type] || props.train.type
-
-const goToBooking = () => {
+function bookSeat(seatItem) {
   router.push({
-    path: '/booking',
+    name: 'TrainBooking',
     query: {
-      trainId: props.train.trainId,
-      from: props.train.departStation,
-      to: props.train.arriveStation,
-      departTime: props.train.departTime,
-      arriveTime: props.train.arriveTime,
-      seat: props.train.seat,
-      price: props.train.price || 200
+      trainId: props.train.trainNumber,
+      from: props.train.fromStation,
+      to: props.train.toStation,
+      departTime: props.train.departureTime,
+      arriveTime: props.train.arrivalTime,
+      seat: seatItem.seatType,
+      price: seatItem.price
     }
   })
+}
+
+function formatDateTime(isoString) {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  const Y = date.getFullYear()
+  const M = String(date.getMonth() + 1).padStart(2, '0')
+  const D = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const m = String(date.getMinutes()).padStart(2, '0')
+  return `${Y}-${M}-${D} ${h}:${m}`
 }
 </script>
 
 <style scoped>
 .train-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.train-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.train-stations {
+  color: #555;
+  font-size: 14px;
+}
+
+.train-times {
+  display: flex;
+  gap: 16px;
+  color: #777;
+  font-size: 14px;
+}
+
+.seat-info h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.seat-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+}
+
+.seat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  font-family: "Segoe UI", sans-serif;
-  transition: transform 0.2s ease;
-}
-.train-card:hover {
-  transform: translateY(-2px);
-}
-
-.info-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.train-id {
-  font-size: 18px;
-  font-weight: bold;
-  color: #1677ff;
-}
-.stations {
-  font-size: 15px;
-  color: #333;
-}
-.arrow {
-  margin: 0 8px;
-  color: #888;
-}
-.time-range {
-  font-size: 14px;
-  color: #666;
-}
-.duration {
-  margin-left: 10px;
-  font-size: 13px;
-  color: #999;
-}
-
-.info-right {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 140px;
-}
-.seat {
-  font-size: 15px;
-  color: #333;
-}
-.type {
-  font-size: 14px;
-  color: #888;
-}
-.status {
-  font-size: 13px;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
-}
-.available {
-  color: #389e0d;
-  background-color: #f6ffed;
-  border: 1px solid #b7eb8f;
-}
-.unavailable {
-  color: #cf1322;
-  background-color: #fff1f0;
-  border: 1px solid #ffa39e;
+  margin-bottom: 8px;
 }
 
 .book-btn {
-  background-color: #1677ff;
-  color: white;
+  background: #409eff;
+  color: #fff;
   border: none;
-  padding: 8px 14px;
-  font-size: 14px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: 0.2s;
-}
-.book-btn:hover {
-  background-color: #135ecf;
+  transition: background 0.3s ease;
 }
 .book-btn:disabled {
-  background-color: #ccc;
+  background: #d9d9d9;
   cursor: not-allowed;
+}
+.book-btn:not(:disabled):hover {
+  background: #3a8ee6;
+}
+
+.no-seat {
+  font-size: 13px;
+  color: #999;
 }
 </style>

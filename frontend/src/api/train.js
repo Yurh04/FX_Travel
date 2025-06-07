@@ -52,7 +52,7 @@ export const searchByDepartureTime = (params) => request.post('/v1/train/search/
 export const searchByDuration = (params) => request.get('/v1/train/search/by-travel-duration', params)
 
 // 生成车票
-export const generateTicket = (userId, trainSeatId) => request.put(`/v1/train/ticket/get/${userId}`, { trainSeatId })
+export const generateTicket = (userId, trainSeatId) => request.put(`/v1/train/ticket/get/${userId}`, trainSeatId)
 
 // 取消车票
 export const cancelTicket = (ticketId) => request.put(`/v1/train/ticket/cancel/${ticketId}`)

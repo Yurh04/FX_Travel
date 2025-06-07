@@ -1,4 +1,4 @@
-<!-- 文件：src/pages/TrainResult.vue -->
+<!-- src/pages/TrainSearchResult.vue -->
 <template>
   <div class="search-result-page">
     <!-- 顶部进度条 -->
@@ -6,7 +6,7 @@
       <ProgressBar :currentStep="1" />
     </div>
 
-    <!-- 登录提示：放在右上角 -->
+    <!-- 登录提示：绝对定位到右上角 -->
     <div class="login-notice-wrapper">
       <LoginNotice @login="handleLogin" />
     </div>
@@ -23,14 +23,14 @@
       />
     </div>
 
-    <!-- 主体区域：列表 + 筛选 -->
+    <!-- 主体区域：车次列表 + 筛选栏 -->
     <div class="main-section">
-      <!-- 车次列表 -->
+      <!-- 车次列表 区域 -->
       <div class="train-list-area">
         <TrainList :trains="filteredTrains" />
       </div>
 
-      <!-- 筛选栏 -->
+      <!-- 筛选栏 区域 -->
       <div class="filter-area">
         <TrainFilter
             v-model:onlyAvailable="onlyAvailable"
@@ -60,46 +60,66 @@ import TrainFilter from '../components/TrainFilter.vue'
 const route = useRoute()
 const router = useRouter()
 
-// 从 query 中获取参数
+// 从 URL query 中拿到初始参数
 const from = ref(route.query.fromCity || '')
 const to = ref(route.query.toCity || '')
 const date = ref(route.query.departureDate || '')
 const returnDate = ref(route.query.returnDate || '')
 const tripType = ref(route.query.tripType || 'oneway')
 
-// 筛选条件
-const onlyAvailable = ref(false)
-const selectedTypes = ref([])
-const selectedTimes = ref([])
-const expanded = ref(false)
+// 过滤器相关状态
+const onlyAvailable = ref(false)      // “只看有票”
+const selectedTypes = ref([])         // 车型筛选
+const selectedTimes = ref([])         // 时间段筛选
+const expanded = ref(false)           // 筛选栏展开/收起
 
-// 后端拉取的原始车次列表
+// allTrains 存放后端返回的原始 data 数组，各项格式：{ train: {...}, trainSeats: [...] }
 const allTrains = ref([])
 
-// 过滤后需要展示的车次
+// filteredTrains：根据 allTrains + 筛选条件 计算得到的数组，传给 TrainList.vue
 const filteredTrains = computed(() => {
-  return allTrains.value.filter(train => {
-    const matchType =
-        selectedTypes.value.length === 0 || selectedTypes.value.includes(train.type)
+  return allTrains.value.filter(item => {
+    const t = item.train
+    const seats = item.trainSeats || []
 
-    const matchTime =
-        selectedTimes.value.length === 0 ||
-        selectedTimes.value.some(range => {
-          const hour = parseInt(train.departTime.split(':')[0])
-          if (range === '00:00 - 06:00') return hour >= 0 && hour < 6
-          if (range === '06:00 - 12:00') return hour >= 6 && hour < 12
-          if (range === '12:00 - 18:00') return hour >= 12 && hour < 18
-          if (range === '18:00 - 24:00') return hour >= 18 && hour < 24
-          return false
-        })
+    // 1. “只看有票”：至少有一个 seat.available > 0
+    if (onlyAvailable.value) {
+      const hasAvailable = seats.some(s => s.available > 0)
+      if (!hasAvailable) return false
+    }
 
-    const matchAvailable = !onlyAvailable.value || train.available
+    // 2. 车型筛选：selectedTypes 里如果不为空，则 item.train.trainType 必须在选中列表里
+    if (selectedTypes.value.length > 0) {
+      // 注意：后端返回的 trainType 可能是 "GREEN_TRAIN"、"HIGH_SPEED" 或你实际接口定义的类型
+      // 这里假设 selectedTypes 存的也是 trainType 的原始值（如 "GREEN_TRAIN"）
+      if (!selectedTypes.value.includes(t.trainType)) {
+        return false
+      }
+    }
 
-    return matchType && matchTime && matchAvailable
+    // 3. 时间段筛选：根据 departureTime（ISO 字符串）里的小时数判断
+    if (selectedTimes.value.length > 0) {
+      // 把 ISO 格式取小时
+      const hour = new Date(t.departureTime).getHours()
+      // 必须有至少一个选中的时间段包含该小时
+      const inAnyRange = selectedTimes.value.some(range => {
+        if (range === '00:00 - 06:00') return hour >= 0 && hour < 6
+        if (range === '06:00 - 12:00') return hour >= 6 && hour < 12
+        if (range === '12:00 - 18:00') return hour >= 12 && hour < 18
+        if (range === '18:00 - 24:00') return hour >= 18 && hour < 24
+        return false
+      })
+      if (!inAnyRange) return false
+    }
+
+    // 如果都通过，则保留这条记录
+    return true
   })
 })
 
-// 调用后端接口，按出发时间查询车次
+/**
+ * 从后端拉取车次列表，并把 res.data.data 赋给 allTrains
+ */
 const fetchTrains = async () => {
   if (!from.value || !to.value || !date.value) {
     allTrains.value = []
@@ -111,19 +131,20 @@ const fetchTrains = async () => {
       arrivalStation: to.value,
       departureDate: date.value
     })
-    allTrains.value = res.data || []
+    // 后端响应格式：{ sortBy, message, data: [ { train:{…}, trainSeats:[…] }, … ] }
+    allTrains.value = res.data.data || []
   } catch (err) {
     console.error('获取车次失败：', err)
     allTrains.value = []
   }
 }
 
-// 首次挂载时拉取参数对应的车次
+// 首次挂载时尝试拉取接口
 onMounted(() => {
   fetchTrains()
 })
 
-// 监听路由 query 中的关键参数变化，重新拉取
+// 监听 URL query 变化，参数改变时重新拉取
 watch(
     () => [route.query.fromCity, route.query.toCity, route.query.departureDate],
     ([newFrom, newTo, newDate]) => {
@@ -134,7 +155,7 @@ watch(
     }
 )
 
-// 点击“搜索”时，用当前输入值更新路由 query
+// 点击“搜索”，更新 URL query（触发上面的 watch）
 const searchTrains = () => {
   router.push({
     path: '/train-result',
@@ -148,7 +169,7 @@ const searchTrains = () => {
   })
 }
 
-// 点击“登录”跳转到鉴权页
+// 点击“登录”，跳转到鉴权页（router/index.js 中定义的 Authentication 路由）
 const handleLogin = () => {
   router.push({ name: 'Authentication' })
 }
@@ -184,7 +205,7 @@ const handleLogin = () => {
   z-index: 10;
 }
 
-/* 美化登录按钮 */
+/* 美化登录按钮（此处针对 LoginNotice 内部按钮，也可以删掉） */
 .login-notice-wrapper button {
   background: linear-gradient(to right, #409eff, #66b1ff);
   color: #fff;
@@ -206,7 +227,7 @@ const handleLogin = () => {
   margin-bottom: 32px;
 }
 
-/* 主体区域 */
+/* 主体区域：车次列表 + 筛选栏 */
 .main-section {
   display: flex;
   gap: 24px;
@@ -214,7 +235,7 @@ const handleLogin = () => {
   max-width: 1200px;
 }
 
-/* 移除 train-list-area 的白色背景、圆角与阴影 */
+/* 车次列表 区域样式 */
 .train-list-area {
   flex: 1;
   background: transparent;
@@ -226,7 +247,7 @@ const handleLogin = () => {
   flex-direction: column;
 }
 
-/* 移除 filter-area 的白色背景、圆角与阴影 */
+/* 筛选栏 区域样式 */
 .filter-area {
   width: 280px;
   background: transparent;
@@ -234,12 +255,11 @@ const handleLogin = () => {
   padding: 16px;
   box-shadow: none;
   max-height: 600px;
-
-  overflow-y: auto;      /* 保留纵向滚动 */
-  overflow-x: hidden;    /* 隐藏横向滚动条 */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* 响应式：窄屏时将筛选栏移到下方，并布局纵向排列 */
+/* 响应式：窄屏时将筛选栏移到下方 */
 @media (max-width: 992px) {
   .main-section {
     flex-direction: column;
