@@ -13,12 +13,14 @@ spring:
     username: 'root'
     # password: 'ss72ss05yy06'
 #    password: 'yyyYYY&0121'
-    password: 'ehern030121'
+    # password: 'ehern030121'
+    password: 'Yurun0326'
     hikari:
       username: 'root'
       # password: 'ss72ss05yy06'
 #      password: 'yyyYYY&0121'
-      password: 'ehern030121'
+      #password: 'ehern030121'
+      password: 'Yurun0326'
       driver-class-name: com.mysql.cj.jdbc.Driver
       maximum-pool-size: 3000
       minimum-idle: 10
