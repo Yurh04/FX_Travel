@@ -21,7 +21,7 @@
           <span class="site-name">风行旅行</span>
         </div>
         <nav class="nav-links">
-          <a href="#" @click.prevent="go('/auth')">登录/注册</a>
+          <LoginNotice />
           <a href="#" @click.prevent="go('/orders')">我的订单</a>
           <a href="#" @click.prevent="go('/messages')" class="message-link">消息中心</a>
           <a href="#" @click.prevent="go('/aboutUs')">关于我们</a>
@@ -112,6 +112,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import LoginNotice from "../components/LoginNotice.vue";
 
 const router = useRouter()
 const route = useRoute()
