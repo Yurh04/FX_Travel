@@ -120,14 +120,16 @@ export const useUserStore = defineStore('user', {
         },
 
         // 新增：从 localStorage 初始化状态
-        initializeFromStorage() {
+        async initializeFromStorage() {
             const savedState = localStorage.getItem('userStore')
             console.log("get savedState")
             console.log(savedState)
-            if (savedState) {
-                const { isLoggedIn, userInfo } = JSON.parse(savedState)
-                this.isLoggedIn = isLoggedIn
-                this.userInfo = userInfo
+            if (savedState && !this.isLoggedIn) {
+                const {isLoggedIn, userInfo} = JSON.parse(savedState)
+                await this.login({
+                    email: userInfo.email,
+                    password: userInfo.password,
+                })
             }
         },
     },

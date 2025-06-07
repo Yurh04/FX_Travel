@@ -24,7 +24,7 @@ router.beforeEach(async (to) => {
         const currentUserStore = useUserStore(pinia)
 
         if (!currentUserStore.loggedIn) {
-            currentUserStore.initializeFromStorage()
+            await currentUserStore.initializeFromStorage()
             console.log('current:' ,currentUserStore)
             if (!currentUserStore.loggedIn) {
                 return {
