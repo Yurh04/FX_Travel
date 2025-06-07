@@ -40,12 +40,11 @@ public class TrainMealOrderController {
 
     @GetMapping("/orders/{userId}")
     public ResponseEntity<?> getOrdersByUser(@PathVariable Integer userId,
-                                                                BindingResult bindingResult,
                                                                 HttpSession session) {
         User user = (User) session.getAttribute("user");
-
-        ResponseEntity<? extends Map<String, ?>> errors = AuthUtil.check(bindingResult, user);
-        if (errors != null) return errors;
+        if (user == null || user.getId() != userId) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         List<TrainMealOrder> orders = trainMealOrderService.getOrdersByUser(userId);
         return ResponseEntity.ok(Map.of(
