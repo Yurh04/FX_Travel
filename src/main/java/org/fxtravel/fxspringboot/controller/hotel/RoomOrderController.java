@@ -58,7 +58,7 @@ public class RoomOrderController {
     }
 
     @GetMapping("/{orderId}")
-    public ResponseEntity<PaymentResultDTO> getOrderPaymentStatus(@PathVariable Integer orderId) {
+    public ResponseEntity<?> getOrderPaymentStatus(@PathVariable Integer orderId) {
         RoomOrder order = roomOrderService.getOrderById(orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();
@@ -67,7 +67,12 @@ public class RoomOrderController {
         PaymentResultDTO result = order.getRelatedPaymentId() != null ?
                 paymentService.checkPaymentStatus(order.getRelatedPaymentId()) : null;
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(Map.of(
+                "message", "房间预订成功",
+                "id", order.getId(),
+                "number", order.getOrderNumber(),
+                "room", order.getRoomId()
+        ));
     }
 
     @GetMapping("/orders/{userId}")

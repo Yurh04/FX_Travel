@@ -68,7 +68,7 @@ public class TrainSeatOrderController {
             return ResponseEntity.ok(Map.of(
                     "message", "车票生成成功",
                     "id", order.getId(),
-                    "number", order.getSeatNumber(),
+                    "number", order.getOrderNumber(),
                     "seat", order.getSeatNumber()
             ));
         } catch (Exception e) {
