@@ -86,7 +86,13 @@ public class TrainMealOrderController {
         }
 
         TrainMealOrder order = trainMealOrderService.createOrder(orderDTO);
-        return ResponseEntity.ok(order.getId());
+        return ResponseEntity.ok(Map.of(
+                "message", "列车餐预订成功",
+                "id", order.getId(),
+                "number", order.getOrderNumber(),
+                "meal", order.getTrainMealId(),
+                "seatOrder", order.getSeatOrderNumber()
+        ));
     }
 
     @GetMapping("/{orderId}")
