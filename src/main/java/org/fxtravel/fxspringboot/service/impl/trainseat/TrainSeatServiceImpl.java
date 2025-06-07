@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -115,19 +116,57 @@ public class TrainSeatServiceImpl implements TrainSeatService {
         if (obj == null || obj.getRemain() < 1) {
             return false;
         }
-        Integer index = SeatUtil.nextAvailable(obj.getSeatAllocation());
+
+        // 获取当前座位分配情况
+        byte[] seatAllocation = obj.getSeatAllocation();
+
+        // 查找下一个可用座位
+        Integer index = SeatUtil.nextAvailable(seatAllocation);
+        if (index == null) {
+            return false; // 没有可用座位
+        }
+
+        // 设置座位号
         seatNumber[0] = SeatUtil.idx2number(index);
 
-        trainSeatMapper.deduct(id, index);
-        return true;
+        // 更新座位分配状态
+        byte[] updatedAllocation = SeatUtil.setBit(seatAllocation, index);
+
+        System.out.println(seatNumber[0]);
+        System.out.println(index);
+        System.out.println(Arrays.toString(updatedAllocation));
+
+        // 更新数据库
+        int affected = trainSeatMapper.deduct(id, updatedAllocation);
+        return affected > 0;
     }
 
     @Override
+    @Transactional(rollbackOn = Exception.class)
     public void putBack(int id, int count, Object seatNumber) {
         if (!(seatNumber instanceof String)) {
             System.err.println(seatNumber.getClass());
             return;
         }
-        trainSeatMapper.add(id, SeatUtil.number2idx((String) seatNumber));
+
+        TrainSeat obj = trainSeatMapper.selectById(id);
+        if (obj == null) {
+            return;
+        }
+
+        // 获取当前座位分配情况
+        byte[] seatAllocation = obj.getSeatAllocation();
+
+        // 转换座位号到索引
+        int index = SeatUtil.number2idx((String) seatNumber);
+        if (index < 0) {
+            return;
+        }
+
+        // 更新座位分配状态
+        byte[] updatedAllocation = SeatUtil.clearBit(seatAllocation, index);
+
+        // 更新数据库
+        trainSeatMapper.add(id, updatedAllocation);
     }
 }

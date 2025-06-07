@@ -68,4 +68,28 @@ public class SeatUtil {
     private static char getBaseChar() {
         return 'A';
     }
+
+    // 设置特定位为1
+    public static byte[] setBit(byte[] bytes, int index) {
+        if (bytes == null || index < 0 || index >= bytes.length * 8) {
+            return bytes;
+        }
+
+        int byteIndex = index / 8;
+        int bitIndex = index % 8;
+        bytes[byteIndex] |= (byte) (1 << bitIndex);
+        return bytes;
+    }
+
+    // 设置特定位为0
+    public static byte[] clearBit(byte[] bytes, int index) {
+        if (bytes == null || index < 0 || index >= bytes.length * 8) {
+            return bytes;
+        }
+
+        int byteIndex = index / 8;
+        int bitIndex = index % 8;
+        bytes[byteIndex] &= (byte) ~(1 << bitIndex);
+        return bytes;
+    }
 }

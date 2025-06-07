@@ -16,23 +16,9 @@ public interface TrainSeatMapper extends BaseMapper<TrainSeat> {
     @Select("SELECT * FROM train_seat WHERE train_id = #{trainID}")
     List<TrainSeat> findByTrain(@Param("trainID") Integer trainID);
 
-    @Update({
-            "<script>",
-            "UPDATE train_seat SET ",
-            "remain = remain - 1, ",
-            "seat_allocation = SET_BIT(seat_allocation, #{index}, 1)",
-            "WHERE id = #{id} AND remain >= 1",
-            "</script>"
-    })
-    int deduct(@Param("id") int id, @Param("index") int index);
+    @Update("UPDATE train_seat SET remain = remain - 1, seat_allocation = #{seatAllocation} WHERE id = #{id} AND remain >= 1")
+    int deduct(@Param("id") int id, @Param("seatAllocation") byte[] seatAllocation);
 
-    @Update({
-            "<script>",
-            "UPDATE train_seat SET ",
-            "remain = remain + 1, ",
-            "seat_allocation = SET_BIT(seat_allocation, #{index}, 0)",
-            "WHERE id = #{id}",
-            "</script>"
-    })
-    int add(@Param("id") int id, @Param("index") int index);
+    @Update("UPDATE train_seat SET remain = remain + 1, seat_allocation = #{seatAllocation} WHERE id = #{id}")
+    int add(@Param("id") int id, @Param("seatAllocation") byte[] seatAllocation);
 }
