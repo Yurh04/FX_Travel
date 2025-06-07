@@ -61,6 +61,9 @@
                   placeholder="选择日期"
                   format="YYYY-MM-DD"
                   value-format="YYYY-MM-DD"
+                  :clearable="false"
+                  :editable="false"
+                  class="date-picker"
                 />
               </el-form-item>
 
@@ -71,6 +74,9 @@
                   placeholder="选择日期"
                   format="YYYY-MM-DD"
                   value-format="YYYY-MM-DD"
+                  :clearable="false"
+                  :editable="false"
+                  class="date-picker"
                 />
               </el-form-item>
 
@@ -121,8 +127,55 @@
                       <span>{{ hotel.rating.toFixed(1) }} 星</span>
                     </div>
                     <div class="hotel-price">￥{{ hotel.pricePerNight }} 起</div>
+                    <el-button 
+                      type="primary" 
+                      size="small"
+                      @click.stop="showBookingDialog(hotel)"
+                      class="book-btn">
+                      立即预订
+                    </el-button>
                   </div>
                 </el-card>
+
+                <!-- 预订对话框 -->
+                <el-dialog
+                  v-model="bookingDialogVisible"
+                  title="酒店预订"
+                  width="40%">
+                  <div v-if="selectedHotel">
+                    <h3>{{ selectedHotel.name }}</h3>
+                    <el-form :model="bookingForm" label-width="100px">
+                      <el-form-item label="入住日期">
+                        <el-date-picker
+                          v-model="bookingForm.checkInDate"
+                          type="date"
+                          placeholder="选择日期"
+                          format="YYYY-MM-DD"
+                          value-format="YYYY-MM-DD"
+                        />
+                      </el-form-item>
+                      <el-form-item label="退房日期">
+                        <el-date-picker
+                          v-model="bookingForm.checkOutDate"
+                          type="date"
+                          placeholder="选择日期"
+                          format="YYYY-MM-DD"
+                          value-format="YYYY-MM-DD"
+                        />
+                      </el-form-item>
+                      <el-form-item label="房间数量">
+                        <el-input-number v-model="bookingForm.roomCount" :min="1" :max="10" />
+                      </el-form-item>
+                      <el-form-item label="总价">
+                        ￥{{ calculateTotalPrice() }}
+                      </el-form-item>
+                    </el-form>
+                  </div>
+                  <template #footer>
+                    <el-button @click="bookingDialogVisible = false">取消</el-button>
+                    <el-button type="primary" @click="handleBooking">确认预订</el-button>
+                  </template>
+                </el-dialog>
               </el-col>
             </el-row>
           </div>
@@ -138,9 +191,62 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { advancedSearch } from '../api/hotel' // 使用高级搜索接口
+import { searchHotels, bookRoom, fetchHotelDetail } from '../api/hotel'
+import { complete } from '../api/pay'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
+
+// 预订相关状态
+const bookingDialogVisible = ref(false)
+const selectedHotel = ref(null)
+const bookingForm = ref({
+  checkInDate: dayjs().format('YYYY-MM-DD'),
+  checkOutDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
+  roomCount: 1
+})
+
+function showBookingDialog(hotel) {
+  selectedHotel.value = hotel
+  bookingDialogVisible.value = true
+}
+
+function calculateTotalPrice() {
+  if (!selectedHotel.value) return 0
+  const nights = dayjs(bookingForm.value.checkOutDate).diff(
+    dayjs(bookingForm.value.checkInDate),
+    'day'
+  )
+  return selectedHotel.value.pricePerNight * nights * bookingForm.value.roomCount
+}
+
+async function handleBooking() {
+  try {
+    const bookingData = {
+      hotelId: selectedHotel.value.hotelId,
+      checkInDate: bookingForm.value.checkInDate,
+      checkOutDate: bookingForm.value.checkOutDate,
+      roomCount: bookingForm.value.roomCount,
+      totalPrice: calculateTotalPrice()
+    }
+    
+    // 调用预订接口
+    const response = await bookRoom(bookingData)
+    
+    // 跳转到支付页面
+    router.push({
+      path: '/payment',
+      query: {
+        orderId: response.data.orderId,
+        amount: response.data.totalPrice
+      }
+    })
+    
+    bookingDialogVisible.value = false
+    ElMessage.success('预订成功，请完成支付')
+  } catch (error) {
+    ElMessage.error('预订失败: ' + error.message)
+  }
+}
 
 // 用户状态管理
 const username = ref('未登录')
@@ -165,7 +271,6 @@ onMounted(() => {
     isLoggedIn.value = true
     avatarUrl.value = avatar || '/images/default-avatar.png'
   }
-  loadHotels()
 })
 
 const router = useRouter()
@@ -196,9 +301,10 @@ const unreadCount = ref(0)
 const params = ref({
   destination: route.query.destination || '',
   checkInDate: route.query.checkInDate || dayjs().format('YYYY-MM-DD'),
-  checkOutDate:
-    route.query.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
+  checkOutDate: route.query.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
 })
+
+
 
 // 排序选项
 const sortOption = ref('') // '', 'price_asc', 'price_desc', 'rating_asc', 'rating_desc'
@@ -210,18 +316,12 @@ const defaultImg = '/images/default-hotel.jpg'
 // 监听 URL query 变化
 watch(
   () => route.query,
-  () => {
-    params.value.destination = route.query.destination || ''
-    params.value.checkInDate =
-      route.query.checkInDate || dayjs().format('YYYY-MM-DD')
-    params.value.checkOutDate =
-      route.query.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
-    loadHotels()
+  (newQuery) => {
+    params.value.destination = newQuery.destination || ''
+    params.value.checkInDate = newQuery.checkInDate || dayjs().format('YYYY-MM-DD')
+    params.value.checkOutDate = newQuery.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
   }
 )
-
-// 初次加载
-onMounted(loadHotels)
 
 // 调用后端的 高级搜索（带排序）接口
 async function loadHotels() {
@@ -235,28 +335,13 @@ async function loadHotels() {
     return
   }
   try {
-    // 构造给后端的 filters 对象
-    const filters = {
+    // 构造给后端的请求参数
+    const requestParams = {
       destination: params.value.destination,
-      checkInDate: params.value.checkInDate,
-      checkOutDate: params.value.checkOutDate
+      namePattern: '' // 可根据需要添加酒店名称筛选
     }
-    // 根据 sortOption 添加排序字段
-    if (sortOption.value === 'price_asc') {
-      filters.sortBy = 'price'
-      filters.sortOrder = 'asc'
-    } else if (sortOption.value === 'price_desc') {
-      filters.sortBy = 'price'
-      filters.sortOrder = 'desc'
-    } else if (sortOption.value === 'rating_asc') {
-      filters.sortBy = 'rating'
-      filters.sortOrder = 'asc'
-    } else if (sortOption.value === 'rating_desc') {
-      filters.sortBy = 'rating'
-      filters.sortOrder = 'desc'
-    }
-    // 调用后端高级搜索接口
-    const response = await advancedSearch(filters)
+    // 调用标准搜索接口
+    const response = await searchHotels(requestParams)
     // 后端返回 should be: response.data = Array<Hotel>
     hotels.value = response.data || []
   } catch (err) {
@@ -274,14 +359,26 @@ const sortedHotels = computed(() => {
 
 // 点击“搜索”时，只更新 URL query，触发 loadHotels()
 function onSearch() {
+  if (!params.value.destination) {
+    ElMessage.warning('请输入目的地/酒店名称')
+    return
+  }
+
+  const checkInDate = params.value.checkInDate || dayjs().format('YYYY-MM-DD')
+  const checkOutDate = params.value.checkOutDate || dayjs().add(1, 'day').format('YYYY-MM-DD')
+
   router.replace({
     name: 'HotelSearch',
     query: {
       destination: params.value.destination,
-      checkInDate: params.value.checkInDate,
-      checkOutDate: params.value.checkOutDate
-      // sortOption 不放到 query 中，排序由 loadHotels() 读取
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate
     }
+  }).then(() => {
+    loadHotels()
+  }).catch(err => {
+    console.error('路由跳转失败:', err)
+    ElMessage.error('搜索失败，请重试')
   })
 }
 
@@ -573,5 +670,34 @@ function goDetail(hotelId) {
     padding-left: 10px;
     padding-right: 10px;
   }
+}
+/* 日期选择器样式 */
+.date-picker {
+  width: 180px;
+}
+
+.el-date-editor .el-input__inner {
+  height: 32px;
+  line-height: 32px;
+}
+
+.el-date-picker {
+  z-index: 9999 !important;
+}
+
+.el-popper {
+  position: absolute;
+  background: #fff;
+  min-width: 150px;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+  padding: 10px;
+  z-index: 2000;
+  color: #606266;
+  line-height: 1.4;
+  text-align: justify;
+  font-size: 14px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  word-break: break-all;
 }
 </style>
