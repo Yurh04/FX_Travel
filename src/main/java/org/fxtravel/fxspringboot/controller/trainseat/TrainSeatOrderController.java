@@ -62,7 +62,8 @@ public class TrainSeatOrderController {
             return ResponseEntity.ok(Map.of(
                     "message", "车票生成成功",
                     "id", order.getId(),
-                    "number", order.getSeatNumber()
+                    "number", order.getSeatNumber(),
+                    "seat", order.getSeatNumber()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
