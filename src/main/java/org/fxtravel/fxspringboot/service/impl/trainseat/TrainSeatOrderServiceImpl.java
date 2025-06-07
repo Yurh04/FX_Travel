@@ -8,8 +8,8 @@ import org.fxtravel.fxspringboot.event.EventCenter;
 import org.fxtravel.fxspringboot.event.EventType;
 import org.fxtravel.fxspringboot.event.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.PaymentMapper;
-import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainSeatMapper;
-import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainSeatOrderMapper;
+import org.fxtravel.fxspringboot.mapper.trainseat.TrainSeatMapper;
+import org.fxtravel.fxspringboot.mapper.trainseat.TrainSeatOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.train.GetTicketRequest;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeatOrder;
@@ -57,6 +57,11 @@ public class TrainSeatOrderServiceImpl implements TrainSeatOrderService {
     }
 
     @Override
+    public boolean existsByTrainAndUser(Integer trainId, Integer userId) {
+        return trainSeatOrderMapper.existsBySeatAndUser(trainId, userId);
+    }
+
+    @Override
     public List<TrainSeatOrder> getOrdersByUserId(Integer userId) {
         return trainSeatOrderMapper.findByUserID(userId);
     }
@@ -64,6 +69,11 @@ public class TrainSeatOrderServiceImpl implements TrainSeatOrderService {
     @Override
     public TrainSeatOrder getOrderById(Integer orderId) {
         return trainSeatOrderMapper.selectById(orderId);
+    }
+
+    @Override
+    public TrainSeatOrder getOrderByNumber(String orderNumber) {
+        return trainSeatOrderMapper.findByOrderNumber(orderNumber);
     }
 
     public TrainSeatOrder createOrder(GetTicketRequest request) {

@@ -16,6 +16,8 @@ export const searchByDuration = (params) => request.post('/train/seat/by-duratio
 
 export const startPayment = (params) => request.post('/train/ticket/get', params)
 
-export const doAsync = (userId) => request().get('/train/ticket', { params: userId} )
+export const doAsync = (orderId) => request.get('/train/ticket', { params: orderId} )
 
 export const searchTrainSeatOrder = (userId) => request.get(`train/order/get/${userId}`)
+
+export const refundSeat = (params) => request.post(`train/refund`, params)

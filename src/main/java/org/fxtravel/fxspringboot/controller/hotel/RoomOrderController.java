@@ -4,9 +4,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.fxtravel.fxspringboot.common.Role;
 import org.fxtravel.fxspringboot.pojo.dto.hotel.BookHotelRequest;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentRequest;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.RoomOrder;
-import org.fxtravel.fxspringboot.pojo.entities.TrainSeatOrder;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.service.inter.common.PaymentService;
 import org.fxtravel.fxspringboot.service.inter.hotel.RoomOrderService;
@@ -28,7 +28,6 @@ public class RoomOrderController {
     @Autowired
     private PaymentService paymentService;
 
-    // 根据座次生成车票接口
     @PostMapping("/room/get")
     public ResponseEntity<?> getRoom(@Valid @RequestBody BookHotelRequest request,
                                        BindingResult bindingResult,
@@ -58,7 +57,7 @@ public class RoomOrderController {
         }
     }
 
-    @GetMapping("/hotel/{orderId}")
+    @GetMapping("/{orderId}")
     public ResponseEntity<PaymentResultDTO> getOrderPaymentStatus(@PathVariable Integer orderId) {
         RoomOrder order = roomOrderService.getOrderById(orderId);
         if (order == null) {
@@ -71,8 +70,19 @@ public class RoomOrderController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/hotel/orders/{userId}")
+    @GetMapping("/orders/{userId}")
     public ResponseEntity<List<RoomOrder>> getOrderByUserId(@PathVariable Integer userId) {
         return ResponseEntity.ok(roomOrderService.getOrdersByUserId(userId));
+    }
+
+    @PostMapping("/refund")
+    public ResponseEntity<?> refund(@Valid @RequestBody PaymentRequest request,
+                                    BindingResult bindingResult, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+
+        ResponseEntity<? extends Map<String, ?>> errors = AuthUtil.check(bindingResult, user);
+        if (errors != null) return errors;
+
+        return ResponseEntity.ok(paymentService.refundPayment(request.getOrderNumber(), request.getData()));
     }
 }

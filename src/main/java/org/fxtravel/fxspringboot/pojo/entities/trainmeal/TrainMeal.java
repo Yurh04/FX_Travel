@@ -1,19 +1,17 @@
-package org.fxtravel.fxspringboot.pojo.entities;
+package org.fxtravel.fxspringboot.pojo.entities.trainmeal;
 
 import jakarta.persistence.*;
-import jdk.jfr.Unsigned;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.fxtravel.fxspringboot.common.E_MealTime;
 
-import java.math.BigDecimal;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class train_meal {
+@Table(name = "train_meal")
+public class TrainMeal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

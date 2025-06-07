@@ -1,5 +1,5 @@
 // TrainSeatMapper.java
-package org.fxtravel.fxspringboot.mapper.TrainSeat;
+package org.fxtravel.fxspringboot.mapper.trainseat;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
