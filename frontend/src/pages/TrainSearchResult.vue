@@ -17,8 +17,6 @@
           :from="from"
           :to="to"
           :departureDate="date"
-          :returnDate="returnDate"
-          :tripType="tripType"
           @search="searchTrains"
       />
     </div>
@@ -64,27 +62,26 @@ const router = useRouter()
 const from = ref(route.query.fromCity || '')
 const to = ref(route.query.toCity || '')
 const date = ref(route.query.departureDate || '')
-const returnDate = ref(route.query.returnDate || '')
-const tripType = ref(route.query.tripType || 'oneway')
 
 // 过滤器相关状态
-const onlyAvailable = ref(false)      // “只看有票”
+const onlyAvailable = ref(false)      // "只看有票"
 const selectedTypes = ref([])         // 车型筛选
 const selectedTimes = ref([])         // 时间段筛选
 const expanded = ref(false)           // 筛选栏展开/收起
 
-// allTrains 存放后端返回的原始 data 数组，各项格式：{ train: {...}, trainSeats: [...] }
+// allTrains 存放后端返回的原始 data 数组，各项格式：{ train: {...}, trainseats: [...] }
 const allTrains = ref([])
 
 // filteredTrains：根据 allTrains + 筛选条件 计算得到的数组，传给 TrainList.vue
 const filteredTrains = computed(() => {
   return allTrains.value.filter(item => {
     const t = item.train
-    const seats = item.trainSeats || []
+    // 注意：后端返回的字段名是 trainseats（小写），不是 trainSeats
+    const seats = item.trainseats || []
 
-    // 1. “只看有票”：至少有一个 seat.available > 0
+    // 1. "只看有票"：至少有一个 seat.remain > 0（后端使用的是 remain 字段，不是 available）
     if (onlyAvailable.value) {
-      const hasAvailable = seats.some(s => s.available > 0)
+      const hasAvailable = seats.some(s => s.remain > 0)
       if (!hasAvailable) return false
     }
 
@@ -131,7 +128,8 @@ const fetchTrains = async () => {
       arrivalStation: to.value,
       departureDate: date.value
     })
-    // 后端响应格式：{ sortBy, message, data: [ { train:{…}, trainSeats:[…] }, … ] }
+    // 后端响应格式：{ sortBy, message, data: [ { train:{…}, trainseats:[…] }, … ] }
+    console.log('API响应数据:', res.data) // 添加调试日志
     allTrains.value = res.data.data || []
   } catch (err) {
     console.error('获取车次失败：', err)
@@ -139,23 +137,37 @@ const fetchTrains = async () => {
   }
 }
 
-// 首次挂载时尝试拉取接口
-onMounted(() => {
-  fetchTrains()
-})
+// 1. 初始化页面时处理URL参数并获取数据
+const initAndFetch = () => {
+  from.value = route.query.fromCity || ''
+  to.value = route.query.toCity || ''
+  date.value = route.query.departureDate || ''
+  
+  // 只有当有查询参数时才获取数据
+  if (route.query.fromCity || route.query.toCity || route.query.departureDate) {
+    fetchTrains()
+  }
+}
 
-// 监听 URL query 变化，参数改变时重新拉取
+// 2. 处理浏览器前进/后退操作
 watch(
-    () => [route.query.fromCity, route.query.toCity, route.query.departureDate],
-    ([newFrom, newTo, newDate]) => {
-      from.value = newFrom || ''
-      to.value = newTo || ''
-      date.value = newDate || ''
+  () => route.query,
+  (newQuery) => {
+    from.value = newQuery.fromCity || ''
+    to.value = newQuery.toCity || ''
+    date.value = newQuery.departureDate || ''
+    
+    // 只有当有查询参数时才获取数据
+    if (newQuery.fromCity || newQuery.toCity || newQuery.departureDate) {
       fetchTrains()
     }
+  }
 )
 
-// 点击“搜索”，更新 URL query（触发上面的 watch）
+// 3. 在组件挂载时初始化
+initAndFetch()
+
+// 4. 搜索按钮处理函数
 const searchTrains = () => {
   router.push({
     path: '/train-result',
@@ -163,13 +175,13 @@ const searchTrains = () => {
       fromCity: from.value,
       toCity: to.value,
       departureDate: date.value,
-      returnDate: returnDate.value,
-      tripType: tripType.value
     }
   })
+  // 直接调用数据获取函数
+  fetchTrains()
 }
 
-// 点击“登录”，跳转到鉴权页（router/index.js 中定义的 Authentication 路由）
+// 点击"登录"，跳转到鉴权页（router/index.js 中定义的 Authentication 路由）
 const handleLogin = () => {
   router.push({ name: 'Authentication' })
 }

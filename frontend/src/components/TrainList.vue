@@ -9,7 +9,7 @@
           v-for="item in trains"
           :key="item.train.id"
           :train="item.train"
-          :seats="item.trainSeats"
+          :seats="item.trainseats"
           class="train-item"
       />
     </div>

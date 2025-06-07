@@ -21,14 +21,14 @@
       <ul>
         <li v-for="seatItem in seats" :key="seatItem.id" class="seat-item">
           <span>
-            {{ seatItem.seatType }} – ¥{{ seatItem.price }} – 剩余：{{ seatItem.available }}
+            {{ seatItem.seatType }} – ¥{{ seatItem.price }} – 剩余：{{ seatItem.remain }}
           </span>
           <button
               class="book-btn"
               @click="bookSeat(seatItem)"
-              :disabled="seatItem.available === 0"
+              :disabled="seatItem.remain === 0"
           >
-            {{ seatItem.available > 0 ? '预订' : '售罄' }}
+            {{ seatItem.remain > 0 ? '预订' : '售罄' }}
           </button>
         </li>
       </ul>
