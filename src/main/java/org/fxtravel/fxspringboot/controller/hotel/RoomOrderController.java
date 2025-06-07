@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -68,5 +69,10 @@ public class RoomOrderController {
                 paymentService.checkPaymentStatus(order.getRelatedPaymentId()) : null;
 
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/hotel/orders/{userId}")
+    public ResponseEntity<List<RoomOrder>> getOrderByUserId(@PathVariable Integer userId) {
+        return ResponseEntity.ok(roomOrderService.getOrdersByUserId(userId));
     }
 }
