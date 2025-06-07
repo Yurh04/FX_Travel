@@ -19,6 +19,8 @@ public class TrainSeatOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    private String orderNumber;
+
     @Column(name = "user_id")
     private Integer userId;
 

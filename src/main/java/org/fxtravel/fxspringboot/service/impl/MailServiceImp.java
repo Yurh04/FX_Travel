@@ -2,12 +2,10 @@ package org.fxtravel.fxspringboot.service.impl;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.fxtravel.fxspringboot.mapper.HotelMapper;
 import org.fxtravel.fxspringboot.mapper.UserMapper;
 import org.fxtravel.fxspringboot.pojo.entities.Notification;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.service.inter.MailService;
-import org.fxtravel.fxspringboot.service.inter.UserService;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;

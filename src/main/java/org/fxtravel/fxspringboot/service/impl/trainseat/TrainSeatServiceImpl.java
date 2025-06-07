@@ -11,7 +11,7 @@ import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainSeatMapper;
 import org.fxtravel.fxspringboot.pojo.dto.train.TrainSearchResult;
 import org.fxtravel.fxspringboot.pojo.entities.Train;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
-import org.fxtravel.fxspringboot.service.inter.TrainSeatService;
+import org.fxtravel.fxspringboot.service.inter.trainseat.TrainSeatService;
 import org.fxtravel.fxspringboot.utils.SeatUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

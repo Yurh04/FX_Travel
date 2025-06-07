@@ -8,18 +8,15 @@ import org.fxtravel.fxspringboot.event.EventCenter;
 import org.fxtravel.fxspringboot.event.EventType;
 import org.fxtravel.fxspringboot.event.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.PaymentMapper;
-import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainMapper;
 import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainSeatMapper;
 import org.fxtravel.fxspringboot.mapper.TrainSeat.TrainSeatOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.train.GetTicketRequest;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeatOrder;
-import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
-import org.fxtravel.fxspringboot.service.inter.PaymentService;
-import org.fxtravel.fxspringboot.service.inter.TrainSeatOrderService;
-import org.fxtravel.fxspringboot.service.inter.TrainSeatService;
-import org.springframework.beans.BeanUtils;
+import org.fxtravel.fxspringboot.service.inter.common.PaymentService;
+import org.fxtravel.fxspringboot.service.inter.trainseat.TrainSeatOrderService;
+import org.fxtravel.fxspringboot.service.inter.trainseat.TrainSeatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -82,6 +79,7 @@ public class TrainSeatOrderServiceImpl implements TrainSeatOrderService {
         order.setTrainId(seat.getTrainId());
         order.setStatus(E_PaymentStatus.IDLE);
         order.setCreateTime(LocalDateTime.now());
+        trainSeatOrderMapper.insert(order);
 
         payment payment = paymentService.createPayment(
                 order.getUserId(),
@@ -93,7 +91,9 @@ public class TrainSeatOrderServiceImpl implements TrainSeatOrderService {
         );
 
         order.setRelatedPaymentId(payment.getId());
-        trainSeatOrderMapper.insert(order);
+        order.setOrderNumber(payment.getOrderNumber());
+        trainSeatOrderMapper.updateById(order);
+
 
         paymentService.simulatePaymentProcess(payment.getOrderNumber(), 30,
                 () -> {

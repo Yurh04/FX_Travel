@@ -1,14 +1,15 @@
-package org.fxtravel.fxspringboot.controller.trainseat;
+package org.fxtravel.fxspringboot.controller.hotel;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.fxtravel.fxspringboot.common.Role;
+import org.fxtravel.fxspringboot.pojo.dto.hotel.BookHotelRequest;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
-import org.fxtravel.fxspringboot.pojo.dto.train.GetTicketRequest;
+import org.fxtravel.fxspringboot.pojo.entities.RoomOrder;
 import org.fxtravel.fxspringboot.pojo.entities.TrainSeatOrder;
 import org.fxtravel.fxspringboot.pojo.entities.User;
 import org.fxtravel.fxspringboot.service.inter.common.PaymentService;
-import org.fxtravel.fxspringboot.service.inter.trainseat.TrainSeatOrderService;
+import org.fxtravel.fxspringboot.service.inter.hotel.RoomOrderService;
 import org.fxtravel.fxspringboot.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,40 +17,39 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/train")
-public class TrainSeatOrderController {
+@RequestMapping("/api/hotel")
+public class RoomOrderController {
     @Autowired
-    private TrainSeatOrderService trainSeatOrderService;
+    private RoomOrderService roomOrderService;
     @Autowired
     private PaymentService paymentService;
 
     // 根据座次生成车票接口
-    @PostMapping("/ticket/get")
-    public ResponseEntity<?> getTicket(@Valid @RequestBody GetTicketRequest request,
+    @PostMapping("/room/get")
+    public ResponseEntity<?> getRoom(@Valid @RequestBody BookHotelRequest request,
                                        BindingResult bindingResult,
                                        HttpSession session) {
-//        User user = (User) session.getAttribute("user");
-//
-//        ResponseEntity<? extends Map<String, ?>> errors = AuthUtil.check(bindingResult, user);
-//        if (errors != null) return errors;
-//
-//        // 验证用户只能为自己生成车票（除非是管理员）
-//        if (!user.getRole().equals(Role.ADMIN) && user.getId() != (request.getUserId())) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "无权限为其他用户生成车票"));
-//        }
+        User user = (User) session.getAttribute("user");
+
+        ResponseEntity<? extends Map<String, ?>> errors = AuthUtil.check(bindingResult, user);
+        if (errors != null) return errors;
+
+        // 验证用户只能为自己操作
+        if (!user.getRole().equals(Role.ADMIN) && user.getId() != (request.getUserId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "无权限为其他用户操作"));
+        }
 
         try {
-            TrainSeatOrder order = trainSeatOrderService.createOrder(request);
+            RoomOrder order = roomOrderService.createOrder(request);
 
             return ResponseEntity.ok(Map.of(
                     "message", "车票生成成功",
                     "id", order.getId(),
-                    "number", order.getSeatNumber(),
-                    "seat", order.getSeatNumber()
+                    "number", order.getOrderNumber(),
+                    "roomId", order.getRoomId()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -57,9 +57,9 @@ public class TrainSeatOrderController {
         }
     }
 
-    @GetMapping("/ticket/{orderId}")
+    @GetMapping("/hotel/{orderId}")
     public ResponseEntity<PaymentResultDTO> getOrderPaymentStatus(@PathVariable Integer orderId) {
-        TrainSeatOrder order = trainSeatOrderService.getOrderById(orderId);
+        RoomOrder order = roomOrderService.getOrderById(orderId);
         if (order == null) {
             return ResponseEntity.notFound().build();
         }
