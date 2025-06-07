@@ -154,7 +154,7 @@ async function fetchOrders() {
     ticketOrders.value = ticketRes?.data || []
 
     // ✅ 保留原来的订餐订单（你可以封装成接口再替换）
-    const mealRes = await fetch(`/api/user/meal-orders?userId=${userId}`).then(r => r.json())
+    const mealRes = await fetch(`/api/train_meal_order/user/${userId}`).then(r => r.json())
     mealOrders.value = mealRes || []
   } catch (e) {
     console.error(e)
