@@ -38,8 +38,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { complete } from '../api/pay'   // ← 改用 complete
 
+
 const route = useRoute()
 const router = useRouter()
+
 
 // 从路由 query 里拿参数
 const trainId     = ref(route.query.trainId     || '未知')

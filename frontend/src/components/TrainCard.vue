@@ -44,6 +44,7 @@
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { startPayment } from '../api/train'
+import { useUserStore } from '../store/user'
 
 const props = defineProps({
   train: {
@@ -58,6 +59,9 @@ const props = defineProps({
 
 const router = useRouter()
 
+const userStore = useUserStore()
+const userId = userStore.userInfo?.id  // 👈 获取当前用户 id
+
 async function bookSeat(seatItem) {
   const payload = {
     trainId: props.train.trainNumber,
@@ -67,7 +71,8 @@ async function bookSeat(seatItem) {
     arriveTime: props.train.arrivalTime,
     seatType: seatItem.seatType,
     seatId: seatItem.id,
-    price: seatItem.price
+    price: seatItem.price,
+    userId: userId
   }
 
   try {

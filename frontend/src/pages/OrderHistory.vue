@@ -115,6 +115,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../store/user'
+import { searchTrainSeatOrder } from '../api/train' // ✅ 引入接口封装
 
 const userStore = useUserStore()
 const router = useRouter()
@@ -129,7 +130,7 @@ const keyword = ref('')
 const selectedStatus = ref('')
 const dateRange = ref([])
 
-// 格式化
+// 格式化函数
 const formatTime = dt => new Date(dt).toLocaleString()
 const formatStatus = s =>
     ({
@@ -139,36 +140,37 @@ const formatStatus = s =>
       IDLE: '未开始'
     }[s] || s)
 
-// 拉取订单
+// 拉取订单数据
 async function fetchOrders() {
   if (!userId) {
     ElMessage.warning('请先登录后查看订单')
     return router.push({ name: 'Login' })
   }
+
   loading.value = true
   try {
-    const [ticketRes, mealRes] = await Promise.all([
-      fetch(`/api/user/orders?userId=${userId}`).then(r => r.json()),
-      fetch(`/api/user/meal-orders?userId=${userId}`).then(r => r.json())
-    ])
-    ticketOrders.value = ticketRes || []
+    // ✅ 使用封装好的车票订单接口
+    const ticketRes = await searchTrainSeatOrder(userId)
+    ticketOrders.value = ticketRes?.data || []
+
+    // ✅ 保留原来的订餐订单（你可以封装成接口再替换）
+    const mealRes = await fetch(`/api/user/meal-orders?userId=${userId}`).then(r => r.json())
     mealOrders.value = mealRes || []
   } catch (e) {
+    console.error(e)
     ElMessage.error('订单加载失败')
   } finally {
     loading.value = false
   }
 }
 
-// 复制车票订单
+// 复制订单信息
 const copyTicket = order => {
   const text = `车票订单：订单号 ${order.id}，车次 ${order.train.trainNumber}，${order.train.fromStation}→${order.train.toStation}，时间 ${formatTime(order.train.departureTime)}，状态 ${formatStatus(order.status)}`
   navigator.clipboard.writeText(text).then(() => {
     ElMessage.success('车票订单信息已复制')
   })
 }
-
-// 复制餐食订单
 const copyMeal = meal => {
   const text = `订餐订单：订单号 ${meal.id}，车次 ${meal.trainNumber}，餐品 ${meal.items?.join('、')}，金额 ￥${meal.total}，状态 ${formatStatus(meal.status)}`
   navigator.clipboard.writeText(text).then(() => {
@@ -176,10 +178,10 @@ const copyMeal = meal => {
   })
 }
 
-// 跳转到订餐页面
+// 跳转订餐
 function goToMeal(trainNumber) {
   router.push({
-    name: 'TrainMeal',       // ← 跟 router/index.js 里定义的 name 一模一样
+    name: 'TrainMeal',
     query: { trainId: trainNumber }
   })
 }
@@ -190,9 +192,7 @@ const filteredTickets = computed(() =>
     ticketOrders.value.filter(o => {
       const matchKeyword =
           !keyword.value ||
-          `${o.train.trainNumber} ${o.train.fromStation} ${o.train.toStation}`.includes(
-              keyword.value
-          )
+          `${o.train.trainNumber} ${o.train.fromStation} ${o.train.toStation}`.includes(keyword.value)
       const matchStatus =
           !selectedStatus.value || o.status === selectedStatus.value
       const matchDate =
@@ -214,6 +214,7 @@ const filteredMeals = computed(() =>
     })
 )
 </script>
+
 
 <style scoped>
 .order-history {
