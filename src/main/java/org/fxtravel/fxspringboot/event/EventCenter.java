@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.enent;
+package org.fxtravel.fxspringboot.event;
 
 public interface EventCenter {
     /**

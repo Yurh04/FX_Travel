@@ -1,19 +1,13 @@
 package org.fxtravel.fxspringboot.service.inter;
 
-import org.fxtravel.fxspringboot.common.SeatType;
-import org.fxtravel.fxspringboot.pojo.entities.TrainSeat;
+import org.fxtravel.fxspringboot.pojo.dto.train.TrainSearchResult;
+import org.fxtravel.fxspringboot.pojo.entities.Train;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface TrainSeatService extends GoodService {
-    public void addTrainSeat(Integer trainId, SeatType seatType, BigDecimal price, Integer available);
-
-    public void deleteTrainSeat(Integer seatId);
-
-    public TrainSeat getTrainSeatById(Integer seatId);
-
-    public List<TrainSeat> getTrainSeatsByTrainId(Integer trainId);
-
-    public void updateTrainSeat(Integer seatId, BigDecimal price, Integer available);
+    Train getTrainById(Integer trainId);
+    List<TrainSearchResult> findByRouteAndTimeOrderByTime(String fromStation, String toStation, LocalDate departureDate);
+    List<TrainSearchResult> findByRouteAndTimeOrderByDuration(String fromStation, String toStation, LocalDate departureDate);
 }

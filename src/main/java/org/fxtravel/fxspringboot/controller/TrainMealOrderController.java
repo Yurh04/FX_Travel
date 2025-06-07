@@ -101,7 +101,7 @@ public class TrainMealOrderController {
      * @return 创建的订单详情
      */
     @PostMapping
-    public ResponseEntity<train_meal_order> createOrder(@RequestBody TrainMealOrderDTO orderDTO
+    public ResponseEntity<Integer> createOrder(@RequestBody TrainMealOrderDTO orderDTO
             , HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
@@ -109,7 +109,7 @@ public class TrainMealOrderController {
         }
 
         train_meal_order order = trainMealOrderService.createOrder(orderDTO);
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(order.getId());
     }
 
     // -------------------- 支付状态接口 --------------------
@@ -130,41 +130,5 @@ public class TrainMealOrderController {
                 paymentService.checkPaymentStatus(order.getRelatedPaymentId()) : null;
 
         return ResponseEntity.ok(result);
-    }
-
-    // -------------------- 统计接口 --------------------
-
-    /**
-     * 统计用户订单总金额
-     * @param userId 用户ID
-     * @return 总金额
-     */
-    @GetMapping("/stats/user/{userId}")
-    public ResponseEntity<Double> sumAmountByUserId(@PathVariable Integer userId
-            , HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        Double total = trainMealOrderService.sumAmountByUserId(userId);
-        return ResponseEntity.ok(total);
-    }
-
-    /**
-     * 统计特定餐食的总销量
-     * @param trainMealId 餐食ID
-     * @return 总销量
-     */
-    @GetMapping("/stats/meal/{trainMealId}")
-    public ResponseEntity<Integer> sumQuantityByTrainMealId(@PathVariable Integer trainMealId
-            , HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        Integer total = trainMealOrderService.sumQuantityByTrainMealId(trainMealId);
-        return ResponseEntity.ok(total);
     }
 }

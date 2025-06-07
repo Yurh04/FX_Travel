@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.enent;
+package org.fxtravel.fxspringboot.event;
 
 @FunctionalInterface
 public interface EventListener<T> {

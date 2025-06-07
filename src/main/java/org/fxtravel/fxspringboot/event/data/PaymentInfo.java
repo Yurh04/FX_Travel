@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.enent.data;
+package org.fxtravel.fxspringboot.event.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,4 +12,5 @@ public class PaymentInfo {
     private Integer quantity;               // 购买数量
     private E_PaymentStatus newStatus;      // payment的状态
     private Integer userId;                 // 用户ID
+    private Object data;                    // 额外信息
 }

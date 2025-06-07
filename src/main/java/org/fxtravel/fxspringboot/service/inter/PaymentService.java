@@ -27,50 +27,28 @@ public interface PaymentService {
      * @param orderNumber 订单号
      * @return 是否成功完成支付
      */
-    boolean completePayment(String orderNumber);
+    boolean completePayment(String orderNumber, Object data);
 
     /**
      * 支付失败
      * @param orderNumber 订单号
      * @return 是否成功标记为失败
      */
-    boolean failPayment(String orderNumber);
+    boolean failPayment(String orderNumber, Object data);
 
     /**
      * 退款
      * @param orderNumber 订单号
      * @return 是否成功退款
      */
-    boolean refundPayment(String orderNumber);
+    boolean refundPayment(String orderNumber, Object data);
 
     /**
      * 完成交易（标记为不可退款状态）
      * @param orderNumber 订单号
      * @return 是否成功标记为完成
      */
-    boolean finishPayment(String orderNumber);
-
-    // -------------------- 管理员查询接口 --------------------
-    /**
-     * 根据ID获取支付记录
-     * @param id 支付记录ID
-     * @return 支付记录
-     */
-    payment getPaymentById(Integer id);
-
-    /**
-     * 根据订单号获取支付记录
-     * @param orderNumber 订单号
-     * @return 支付记录
-     */
-    payment getPaymentByOrderNumber(String orderNumber);
-
-    /**
-     * 根据条件查询支付记录
-     * @param queryDTO 查询条件
-     * @return 符合条件的支付记录列表
-     */
-    List<payment> queryPayments(PaymentQueryDTO queryDTO);
+    boolean finishPayment(String orderNumber, Object data);
 
     // -------------------- 支付模拟接口 --------------------
     /**
@@ -80,7 +58,7 @@ public interface PaymentService {
      * @return CompletableFuture<Boolean> 支付结果
      */
     PaymentResultDTO simulatePaymentProcess(String orderNumber, long timeout,
-                                            Supplier<Boolean> inventoryDeduction);
+                                            Supplier<Boolean> inventoryDeduction, Supplier<Object> data);
 
     /**
      * 检查支付状态

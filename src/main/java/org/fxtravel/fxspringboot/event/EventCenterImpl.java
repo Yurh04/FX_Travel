@@ -1,10 +1,5 @@
-package org.fxtravel.fxspringboot.enent;
+package org.fxtravel.fxspringboot.event;
 
-import org.fxtravel.fxspringboot.enent.EventCenter;
-import org.fxtravel.fxspringboot.enent.EventListener;
-import org.fxtravel.fxspringboot.enent.EventType;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;

@@ -42,18 +42,4 @@ public interface TrainMealOrderService {
      * @return 创建的订单实体
      */
     train_meal_order createOrder(TrainMealOrderDTO orderDTO);
-
-    /**
-     * 统计用户订单总金额
-     * @param userId 用户ID
-     * @return 总金额
-     */
-    Double sumAmountByUserId(Integer userId);
-
-    /**
-     * 统计特定餐食的总销量
-     * @param trainMealId 餐食ID
-     * @return 总销量
-     */
-    Integer sumQuantityByTrainMealId(Integer trainMealId);
 }

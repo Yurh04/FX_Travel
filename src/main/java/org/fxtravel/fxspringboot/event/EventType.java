@@ -1,4 +1,4 @@
-package org.fxtravel.fxspringboot.enent;
+package org.fxtravel.fxspringboot.event;
 
 /**
  * 事件类型标记接口

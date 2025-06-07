@@ -4,6 +4,7 @@ import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentDTO;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
+import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentRequest;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
 import org.fxtravel.fxspringboot.service.inter.PaymentService;
@@ -20,78 +21,27 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
-    // -------------------- 管理员查询接口 --------------------
-    @GetMapping("/{id}")
-    public ResponseEntity<payment> getPaymentById(@PathVariable Integer id) {
-        payment payment = paymentService.getPaymentById(id);
-        return ResponseEntity.ok(payment);
-    }
-
-    @GetMapping("/order/{orderNumber}")
-    public ResponseEntity<payment> getPaymentByOrderNumber(@PathVariable String orderNumber) {
-        payment payment = paymentService.getPaymentByOrderNumber(orderNumber);
-        return ResponseEntity.ok(payment);
-    }
-
-//    @GetMapping("/type/{type}")
-//    public ResponseEntity<List<payment>> getPaymentsByType(@PathVariable E_PaymentType type) {
-//        List<payment> payments = paymentService.getPaymentsByType(type);
-//        return ResponseEntity.ok(payments);
-//    }
-
-    @PostMapping("/query")
-    public ResponseEntity<List<payment>> queryPayments(@RequestBody PaymentQueryDTO queryDTO) {
-        List<payment> payments = paymentService.queryPayments(queryDTO);
-        return ResponseEntity.ok(payments);
-    }
-
-    // -------------------- 支付操作接口 --------------------
-//    @PostMapping
-//    public ResponseEntity<payment> createPayment(@RequestBody PaymentDTO paymentDTO) {
-//        payment payment = paymentService.createPayment(
-//                paymentDTO.getUserId(),
-//                paymentDTO.getType(),
-//                paymentDTO.getAmount(),
-//                paymentDTO.getRelatedId());
-//        return ResponseEntity.ok(payment);
-//    }
-
-    @PostMapping("/complete/{orderNumber}")
-    public ResponseEntity<Boolean> completePayment(@PathVariable String orderNumber) {
-        boolean result = paymentService.completePayment(orderNumber);
+    @PostMapping("/complete")
+    public ResponseEntity<Boolean> completePayment(@RequestBody PaymentRequest request) {
+        boolean result = paymentService.completePayment(request.getOrderNumber(), request.getData());
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/fail/{orderNumber}")
-    public ResponseEntity<Boolean> cancelPayment(@PathVariable String orderNumber) {
-        boolean result = paymentService.failPayment(orderNumber);
+    @PostMapping("/fail")
+    public ResponseEntity<Boolean> cancelPayment(@RequestBody PaymentRequest request) {
+        boolean result = paymentService.failPayment(request.getOrderNumber(), request.getData());
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/refund/{orderNumber}")
-    public ResponseEntity<Boolean> refundPayment(@PathVariable String orderNumber) {
-        boolean result = paymentService.refundPayment(orderNumber);
+    @PostMapping("/refund")
+    public ResponseEntity<Boolean> refundPayment(@RequestBody PaymentRequest request) {
+        boolean result = paymentService.refundPayment(request.getOrderNumber(), request.getData());
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/finish/{orderNumber}")
-    public ResponseEntity<Boolean> finishPayment(@PathVariable String orderNumber) {
-        boolean result = paymentService.finishPayment(orderNumber);
-        return ResponseEntity.ok(result);
-    }
-
-    // -------------------- 异步支付接口 --------------------
-//    @PostMapping("/async/{orderNumber}")
-//    public ResponseEntity<PaymentResultDTO> processPaymentAsync(
-//            @PathVariable String orderNumber,
-//            @RequestParam(defaultValue = "30") long timeoutSeconds) {
-//        PaymentResultDTO result = paymentService.simulatePaymentProcess(orderNumber, timeoutSeconds);
-//        return ResponseEntity.ok(result);
-//    }
-
-    @GetMapping("/async/{orderNumber}")
-    public ResponseEntity<PaymentResultDTO> getAsyncStatus(@PathVariable String orderNumber) {
-        PaymentResultDTO result = paymentService.checkPaymentStatus(orderNumber);
+    @PostMapping("/finish")
+    public ResponseEntity<Boolean> finishPayment(@RequestBody PaymentRequest request) {
+        boolean result = paymentService.finishPayment(request.getOrderNumber(), request.getData());
         return ResponseEntity.ok(result);
     }
 }

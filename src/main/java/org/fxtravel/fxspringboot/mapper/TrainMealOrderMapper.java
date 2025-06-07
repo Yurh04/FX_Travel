@@ -53,12 +53,4 @@ public interface TrainMealOrderMapper extends BaseMapper<train_meal_order> {
     // 更新订单状态
     @Update("UPDATE train_meal_order SET status = #{status} WHERE id = #{id}")
     int updateStatus(Integer id, E_PaymentStatus status);
-
-    // 统计用户订单总金额
-    @Select("SELECT COALESCE(SUM(total_amount), 0) FROM train_meal_order WHERE user_id = #{userId}")
-    Double sumAmountByUserId(Integer userId);
-
-    // 统计特定餐食的总销量
-    @Select("SELECT COALESCE(SUM(quantity), 0) FROM train_meal_order WHERE train_meal_id = #{trainMealId}")
-    Integer sumQuantityByTrainMealId(Integer trainMealId);
 }

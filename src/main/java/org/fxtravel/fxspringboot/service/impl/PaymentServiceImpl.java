@@ -1,14 +1,12 @@
 package org.fxtravel.fxspringboot.service.impl;
 
 import jakarta.transaction.Transactional;
-import org.fxtravel.fxspringboot.common.E_NotificationEventType;
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
-import org.fxtravel.fxspringboot.enent.EventCenter;
-import org.fxtravel.fxspringboot.enent.EventType;
-import org.fxtravel.fxspringboot.enent.data.PaymentInfo;
+import org.fxtravel.fxspringboot.event.EventCenter;
+import org.fxtravel.fxspringboot.event.EventType;
+import org.fxtravel.fxspringboot.event.data.PaymentInfo;
 import org.fxtravel.fxspringboot.mapper.PaymentMapper;
-import org.fxtravel.fxspringboot.pojo.dto.notification.NotificationRequestDTO;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentQueryDTO;
 import org.fxtravel.fxspringboot.pojo.dto.payment.PaymentResultDTO;
 import org.fxtravel.fxspringboot.pojo.entities.payment;
@@ -16,11 +14,9 @@ import org.fxtravel.fxspringboot.service.inter.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -67,8 +63,8 @@ public class PaymentServiceImpl implements PaymentService {
     // 状态变更通知
     private void notifyPaymentStatusChanged(E_PaymentType type, Integer relatedId,
                                             E_PaymentStatus newStatus, Integer quantity, Integer goodId,
-                                            Integer userId) {
-        PaymentInfo info = new PaymentInfo(relatedId, goodId, quantity, newStatus, userId);
+                                            Integer userId, Object data) {
+        PaymentInfo info = new PaymentInfo(relatedId, goodId, quantity, newStatus, userId, data);
 
         switch (type) {
             case TRAIN_TICKET:
@@ -83,7 +79,7 @@ public class PaymentServiceImpl implements PaymentService {
     // 创建通知
     private void notifyPaymentCreated(E_PaymentType type, Integer relatedId,
                                       Integer quantity, Integer goodId, Integer userId) {
-        PaymentInfo info = new PaymentInfo(relatedId, goodId, quantity, E_PaymentStatus.IDLE, userId);
+        PaymentInfo info = new PaymentInfo(relatedId, goodId, quantity, E_PaymentStatus.IDLE, userId, null);
 
         switch (type) {
             case TRAIN_TICKET:
@@ -99,7 +95,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public boolean completePayment(String orderNumber) {
+    public boolean completePayment(String orderNumber, Object data) {
         // 检查当前状态是否为PENDING
         payment payment = paymentMapper.selectByOrderNumber(orderNumber);
         if (payment == null || payment.getStatus() != E_PaymentStatus.PENDING) {
@@ -112,7 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(E_PaymentStatus.COMPLETED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(),
                     E_PaymentStatus.COMPLETED, payment.getQuantity(),
-                    payment.getGoodId(), payment.getUserId());
+                    payment.getGoodId(), payment.getUserId(), data);
         }
 
         // 通知等待中的支付流程
@@ -125,7 +121,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public boolean failPayment(String orderNumber) {
+    public boolean failPayment(String orderNumber, Object data) {
         // 检查当前状态是否为PENDING
         payment payment = paymentMapper.selectByOrderNumber(orderNumber);
         if (payment == null ||
@@ -140,7 +136,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(E_PaymentStatus.FAILED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(),
                     E_PaymentStatus.FAILED, payment.getQuantity(),
-                    payment.getGoodId(), payment.getUserId());
+                    payment.getGoodId(), payment.getUserId(), data);
         }
 
         // 通知等待中的支付流程
@@ -153,7 +149,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public boolean refundPayment(String orderNumber) {
+    public boolean refundPayment(String orderNumber, Object data) {
         // 检查当前状态是否为COMPLETED(且不是FINISHED)
         payment payment = paymentMapper.selectByOrderNumber(orderNumber);
         if (payment == null ||
@@ -166,14 +162,14 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(E_PaymentStatus.REFUNDED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(),
                     E_PaymentStatus.REFUNDED, payment.getQuantity(),
-                    payment.getGoodId(), payment.getUserId());
+                    payment.getGoodId(), payment.getUserId(), data);
         }
 
         return result > 0;
     }
 
     @Override
-    public boolean finishPayment(String orderNumber) {
+    public boolean finishPayment(String orderNumber, Object data) {
         // 检查当前状态是否为COMPLETED
         payment payment = paymentMapper.selectByOrderNumber(orderNumber);
         if (payment == null || payment.getStatus() != E_PaymentStatus.COMPLETED) {
@@ -185,7 +181,7 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setStatus(E_PaymentStatus.FINISHED);
             notifyPaymentStatusChanged(payment.getType(), payment.getRelatedId(),
                     E_PaymentStatus.FINISHED, payment.getQuantity(),
-                    payment.getGoodId(), payment.getUserId());
+                    payment.getGoodId(), payment.getUserId(),data);
         }
 
         return result > 0;
@@ -194,7 +190,7 @@ public class PaymentServiceImpl implements PaymentService {
     // -------------------- 支付模拟接口实现 --------------------
     @Override
     public PaymentResultDTO simulatePaymentProcess(String orderNumber, long timeout
-            , Supplier<Boolean> inventoryDeduction) {
+            , Supplier<Boolean> inventoryDeduction, Supplier<Object> data) {
         PaymentResultDTO result = new PaymentResultDTO();
         result.setOrderNumber(orderNumber);
 
@@ -227,7 +223,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // 库存检查（原子性）
         if (!inventoryDeduction.get()) {
-            failPayment(orderNumber);
+            failPayment(orderNumber, data.get());
             result.setCurrentStatus(E_PaymentStatus.FAILED);
             result.setRemainingTimeSeconds(0L);
             result.setMessage("库存不足，订单创建失败");
@@ -254,7 +250,7 @@ public class PaymentServiceImpl implements PaymentService {
                 // 检查状态是否仍然是PENDING（可能已经被其他操作改变）
                 payment currentPayment = paymentMapper.selectByOrderNumber(orderNumber);
                 if (currentPayment != null && currentPayment.getStatus() == E_PaymentStatus.PENDING) {
-                    failPayment(orderNumber);
+                    failPayment(orderNumber, data.get());
 
                     future.complete(false);
                     pendingPayments.remove(orderNumber);
@@ -275,22 +271,6 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResultDTO checkPaymentStatus(Integer paymentId) {
         payment payment = paymentMapper.selectById(paymentId);
         return getPaymentResultDTO(payment);
-    }
-
-    // -------------------- 管理员查询接口实现 --------------------
-    @Override
-    public payment getPaymentById(Integer id) {
-        return paymentMapper.selectById(id);
-    }
-
-    @Override
-    public payment getPaymentByOrderNumber(String orderNumber) {
-        return paymentMapper.selectByOrderNumber(orderNumber);
-    }
-
-    @Override
-    public List<payment> queryPayments(PaymentQueryDTO queryDTO) {
-        return paymentMapper.selectByConditionsDTO(queryDTO);
     }
 
     // -------------------- 私有方法 --------------------

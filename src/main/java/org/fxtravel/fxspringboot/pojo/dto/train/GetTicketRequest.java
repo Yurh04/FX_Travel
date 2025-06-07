@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class GetTicketRequest {
-    @NotNull(message = "座位ID不能为空")
-    private Integer trainSeatId;
+    private Integer userId;
+    private Integer seatId;
 }

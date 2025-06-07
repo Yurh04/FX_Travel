@@ -5,10 +5,10 @@ import jakarta.annotation.PreDestroy;
 import jakarta.transaction.Transactional;
 import org.fxtravel.fxspringboot.common.E_PaymentStatus;
 import org.fxtravel.fxspringboot.common.E_PaymentType;
-import org.fxtravel.fxspringboot.enent.EventCenter;
-import org.fxtravel.fxspringboot.enent.EventType;
-import org.fxtravel.fxspringboot.enent.data.PaymentInfo;
-import org.fxtravel.fxspringboot.mapper.TrainMealMapper;
+import org.fxtravel.fxspringboot.event.EventCenter;
+import org.fxtravel.fxspringboot.event.EventType;
+import org.fxtravel.fxspringboot.event.data.PaymentInfo;
+import org.fxtravel.fxspringboot.mapper.PaymentMapper;
 import org.fxtravel.fxspringboot.mapper.TrainMealOrderMapper;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderDTO;
 import org.fxtravel.fxspringboot.pojo.dto.trainmeal.TrainMealOrderQueryDTO;
@@ -32,6 +32,9 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
 
     @Autowired
     private TrainMealOrderMapper trainMealOrderMapper;
+
+    @Autowired
+    PaymentMapper paymentMapper;
 
     @Autowired
     private TrainMealService trainMealService;
@@ -102,8 +105,6 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
         order.setCreateTime(LocalDateTime.now());
 
         // 4. 保存订单
-        trainMealOrderMapper.insert(order);
-
         // 5. 创建支付记录
         payment payment = paymentService.createPayment(
                 order.getUserId(),
@@ -113,21 +114,15 @@ public class TrainMealOrderServiceImpl implements TrainMealOrderService {
                 order.getQuantity(),
                 order.getTrainMealId()
         );
+        paymentMapper.insert(payment);
+        order.setRelatedPaymentId(payment.getId());
+        trainMealOrderMapper.insert(order);
 
         // 6. 启动异步支付流程
         paymentService.simulatePaymentProcess(payment.getOrderNumber(), 30,
-                () -> trainMealService.checkAndGet(meal.getId(), order.getQuantity()));
+                () -> trainMealService.checkAndGet(meal.getId(), order.getQuantity(), null),
+                () -> null);
 
         return order;
-    }
-
-    @Override
-    public Double sumAmountByUserId(Integer userId) {
-        return trainMealOrderMapper.sumAmountByUserId(userId);
-    }
-
-    @Override
-    public Integer sumQuantityByTrainMealId(Integer trainMealId) {
-        return trainMealOrderMapper.sumQuantityByTrainMealId(trainMealId);
     }
 }
