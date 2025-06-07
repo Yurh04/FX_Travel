@@ -17,6 +17,8 @@ public class train_meal_order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    private String orderNumber;
     @Column(nullable = false)
     private Integer userId; // 用户ID
     @Column(nullable = false)
