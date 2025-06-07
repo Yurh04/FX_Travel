@@ -1,31 +1,19 @@
 <template>
   <div class="flat-search-bar">
-    <!-- 行程选择 -->
-    <div class="trip-options">
-      <label>
-        <input type="radio" v-model="tripType" value="oneway" />
-        <span class="radio-label" :class="{ active: tripType === 'oneway' }">
-          单程
-        </span>
-      </label>
-      <label>
-        <input type="radio" v-model="tripType" value="round" />
-        <span class="radio-label" :class="{ active: tripType === 'round' }">
-          往返
-        </span>
-      </label>
-    </div>
+
 
     <!-- 城市与日期选择 -->
     <div class="form-row">
       <!-- 出发城市 -->
-      <div class="form-box" @click.stop="activeField = 'from'">
+      <div class="form-box" @click="toggleCitySelect('from')">
         <div class="label">出发城市</div>
         <div class="value">{{ fromCity || '请选择' }}</div>
         <transition name="fade">
           <CitySelect
               v-if="activeField === 'from'"
-              @select="selectCity('from', $event)"
+              @select="selectCity"
+              @close="closeCitySelect"
+              field="from"
           />
         </transition>
       </div>
@@ -34,13 +22,15 @@
       <button class="swap-btn" @click="swapCities">⇄</button>
 
       <!-- 到达城市 -->
-      <div class="form-box" @click.stop="activeField = 'to'">
+      <div class="form-box" @click="toggleCitySelect('to')">
         <div class="label">到达城市</div>
         <div class="value">{{ toCity || '请选择' }}</div>
         <transition name="fade">
           <CitySelect
-              v-if="activeField === 'to'"
-              @select="selectCity('to', $event)"
+                v-if="activeField === 'to'"
+                @select="selectCity"
+                @close="closeCitySelect"
+                field="to"
           />
         </transition>
       </div>
@@ -51,11 +41,7 @@
         <input type="date" v-model="departureDate" />
       </div>
 
-      <!-- 返程日期，仅在往返时显示 -->
-      <div class="form-box" v-if="tripType === 'round'">
-        <div class="label">返程日期</div>
-        <input type="date" v-model="returnDate" />
-      </div>
+
 
       <!-- 搜索按钮 -->
       <button class="search-btn" @click="handleSearch">搜索</button>
@@ -72,9 +58,7 @@ import CitySelect from './CitySelect.vue'
 const props = defineProps({
   from: String,
   to: String,
-  departureDate: String,
-  returnDate: String,
-  tripType: String
+  departureDate: String
 })
 
 const router = useRouter()
@@ -83,8 +67,6 @@ const router = useRouter()
 const fromCity = ref('')
 const toCity = ref('')
 const departureDate = ref('')
-const returnDate = ref('')
-const tripType = ref('oneway')
 const activeField = ref(null)
 
 // 自动回填 props 到本地值
@@ -92,9 +74,21 @@ watchEffect(() => {
   if (props.from) fromCity.value = props.from
   if (props.to) toCity.value = props.to
   if (props.departureDate) departureDate.value = props.departureDate
-  if (props.returnDate) returnDate.value = props.returnDate
-  if (props.tripType) tripType.value = props.tripType
 })
+
+// 切换城市选择器显示/隐藏
+const toggleCitySelect = (field) => {
+  if (activeField.value === field) {
+    activeField.value = null
+  } else {
+    activeField.value = field
+  }
+}
+
+// 关闭城市选择器
+const closeCitySelect = () => {
+  activeField.value = null
+}
 
 // 交换城市
 const swapCities = () => {
@@ -104,12 +98,16 @@ const swapCities = () => {
 }
 
 // 选中城市后：更新对应值，并关闭弹窗
-const selectCity = (field, city) => {
-  if (field === 'from') fromCity.value = city
-  else toCity.value = city
-
-  // 关闭 CitySelect 弹窗
-  activeField.value = null
+const selectCity = (data) => {
+  const { field, city } = data
+  if (field === 'from') {
+    fromCity.value = city
+  } else if (field === 'to') {
+    toCity.value = city
+  }
+  
+  // 关闭城市选择器
+  closeCitySelect()
 }
 
 // 点击搜索按钮，携带参数跳转到结果页
@@ -123,25 +121,25 @@ const handleSearch = () => {
     query: {
       fromCity: fromCity.value,
       toCity: toCity.value,
-      departureDate: departureDate.value,
-      returnDate: returnDate.value,
-      tripType: tripType.value
+      departureDate: departureDate.value
     }
   })
 }
 
 // 点击空白区域关闭弹窗
 const handleClickOutside = (e) => {
-  if (!e.target.closest('.form-box')) {
+  // 检查点击的元素是否在城市选择器内部
+  if (!e.target.closest('.city-select-popup') && !e.target.closest('.form-box')) {
     activeField.value = null
   }
 }
 
 onMounted(() => {
-  window.addEventListener('click', handleClickOutside)
+  document.addEventListener('click', handleClickOutside)
 })
+
 onBeforeUnmount(() => {
-  window.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -154,20 +152,6 @@ onBeforeUnmount(() => {
   font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
   max-width: 1080px;
   margin: 0 auto;
-}
-
-.trip-options {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-  font-weight: bold;
-  font-size: 15px;
-  color: #333;
-}
-
-.trip-options input[type='radio'] {
-  margin-right: 6px;
-  accent-color: #1677ff;
 }
 
 .form-row {
