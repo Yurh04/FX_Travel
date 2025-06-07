@@ -59,7 +59,6 @@ import { useUserStore } from '../store/user'
 
 const userStore = useUserStore()
 const router = useRouter()
-userStore.restoreSession()
 
 const userId = userStore.userInfo?.id
 
