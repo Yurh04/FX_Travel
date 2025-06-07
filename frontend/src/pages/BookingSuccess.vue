@@ -1,4 +1,4 @@
-<!-- 文件：src/pages/BookingSuccess.vue -->
+<!-- src/pages/BookingSuccess.vue -->
 <template>
   <div class="success-page">
     <div class="success-card">
@@ -18,6 +18,9 @@
         <button class="btn-view-orders" @click="goToOrders">
           查看订单
         </button>
+        <button class="btn-train-meal" @click="goToTrainMeal">
+          火车订餐
+        </button>
         <button class="btn-home" @click="goHome">
           回到首页
         </button>
@@ -34,6 +37,11 @@ const router = useRouter()
 // 点击“查看订单”
 const goToOrders = () => {
   router.push({ name: 'OrderHistory' })
+}
+
+// 点击“火车订餐”
+const goToTrainMeal = () => {
+  router.push({ name: 'TrainMeal' })
 }
 
 // 点击“回到首页”
@@ -93,6 +101,7 @@ const goHome = () => {
 }
 
 .button-group .btn-view-orders,
+.button-group .btn-train-meal,
 .button-group .btn-home {
   width: 100%;
   padding: 12px 0;
@@ -107,16 +116,22 @@ const goHome = () => {
   background: linear-gradient(to right, #409eff, #66b1ff);
   color: #fff;
 }
-
 .btn-view-orders:hover {
   background: linear-gradient(to right, #3a8ee6, #5caceb);
+}
+
+.btn-train-meal {
+  background: linear-gradient(to right, #ff9a00, #ffbf47);
+  color: #fff;
+}
+.btn-train-meal:hover {
+  background: linear-gradient(to right, #e08800, #d1a83c);
 }
 
 .btn-home {
   background: #f0f0f0;
   color: #333;
 }
-
 .btn-home:hover {
   background: #e0e0e0;
 }

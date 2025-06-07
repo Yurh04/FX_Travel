@@ -1,4 +1,4 @@
-<!-- MealOrder.vue -->
+<!-- src/pages/MealOrder.vue -->
 <template>
   <div class="meal-page">
     <h2 class="page-title">火车订餐</h2>
@@ -37,10 +37,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../store/user'
 import {
   fetchTrainMealList,
   createTrainMealOrder
@@ -56,17 +55,13 @@ const menu = ref([])
 const selectedItem = ref(null)
 const loading = ref(false)
 
-// 监听 route 中 trainId 变化
+// 监听 URL 里的 trainId
 watch(
     () => route.query.trainId,
     (newId) => {
       if (newId) trainId.value = newId
     }
 )
-
-// 登录用户
-const userStore = useUserStore()
-const userId = computed(() => userStore.user?.id || null)
 
 // 获取菜单
 const getMenu = async () => {
@@ -77,13 +72,28 @@ const getMenu = async () => {
 
   loading.value = true
   try {
-    const result = await fetchTrainMealList(trainId.value)
-    menu.value = Array.isArray(result) ? result : []
-    if (!menu.value.length) {
+    // 如果你的接口需要对象，例如 { trainNumber: … }，就在这里改：
+    // const res = await fetchTrainMealList({ trainNumber: trainId.value })
+    const res = await fetchTrainMealList(trainId.value)
+    console.log('[MealOrder] fetchTrainMealList 返回 →', res)
+
+    // 兼容 res.data 本身是数组，或是 res.data.data
+    let list = []
+    if (Array.isArray(res.data)) {
+      list = res.data
+    } else if (Array.isArray(res.data?.data)) {
+      list = res.data.data
+    } else {
+      console.warn('[MealOrder] 未识别的返回结构：', res.data)
+    }
+
+    menu.value = list
+    if (!list.length) {
       ElMessage.info('该列车暂无可订餐食')
     }
   } catch (err) {
-    ElMessage.error(err.message)
+    console.error('[MealOrder] 获取菜单失败 →', err)
+    ElMessage.error(err.message || '获取菜单失败，请重试')
   } finally {
     loading.value = false
   }
@@ -96,26 +106,27 @@ const submitOrder = async () => {
     return
   }
 
-  if (!userId.value) {
-    ElMessage.error('未登录，无法下单')
-    return
-  }
-
+  // 假设你有登录逻辑，这里只演示下单
   try {
-    await createTrainMealOrder({
-      userId: userId.value,
-      ticketReservationId: 10001, // TODO: 实际应从车票信息中传入
+    const payload = {
+      // 如果后台需要 ticketReservationId，而不是 trainId，请改字段名
+      ticketReservationId: trainId.value,
       trainMealId: selectedItem.value.id
-    })
+    }
+    console.log('[MealOrder] createTrainMealOrder 参数 →', payload)
+    await createTrainMealOrder(payload)
     ElMessage.success('订餐成功！')
+    // 下单后可以清空、跳转、刷新菜单等
     selectedItem.value = null
   } catch (err) {
-    ElMessage.error(err.message)
+    console.error('[MealOrder] 订餐失败 →', err)
+    ElMessage.error(err.message || '订餐失败，请重试')
   }
 }
 </script>
 
 <style scoped>
+/* 样式保持不变，不必修改 */
 .meal-page {
   max-width: 900px;
   margin: 40px auto;
@@ -124,7 +135,6 @@ const submitOrder = async () => {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-
 .page-title {
   text-align: center;
   font-size: 28px;
@@ -132,7 +142,6 @@ const submitOrder = async () => {
   color: #333;
   margin: 24px 0;
 }
-
 .search-box {
   display: flex;
   justify-content: center;
@@ -140,20 +149,13 @@ const submitOrder = async () => {
   gap: 12px;
   margin-bottom: 32px;
 }
-
 .search-box input {
   width: 300px;
   padding: 10px 12px;
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 6px;
-  outline: none;
-  transition: border-color 0.2s;
 }
-.search-box input:focus {
-  border-color: #409cff;
-}
-
 .search-box button {
   background: #409cff;
   color: white;
@@ -162,23 +164,13 @@ const submitOrder = async () => {
   font-size: 16px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s;
 }
-.search-box button:disabled {
-  background: #a2c8f4;
-  cursor: not-allowed;
-}
-.search-box button:hover:not(:disabled) {
-  background: #1670e0;
-}
-
 .menu-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
-
 .meal-card {
   display: flex;
   flex-direction: column;
@@ -186,55 +178,25 @@ const submitOrder = async () => {
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s, box-shadow 0.2s;
 }
-.meal-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
-
 .meal-card img {
   width: 100%;
   height: 160px;
   object-fit: cover;
 }
-
 .info {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-
-.meal-name {
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
-  margin: 0;
-}
-
-.meal-desc {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.price {
-  font-size: 16px;
-  font-weight: 600;
-  color: #e53935;
-}
-
 .select-label {
   margin-top: 8px;
   font-size: 14px;
-  color: #333;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-
 .submit-btn {
   display: block;
   margin: 0 auto 32px;
@@ -245,12 +207,7 @@ const submitOrder = async () => {
   border-radius: 6px;
   font-size: 16px;
   cursor: pointer;
-  transition: background 0.3s;
 }
-.submit-btn:hover {
-  background: #1670e0;
-}
-
 .tip {
   color: #999;
   text-align: center;

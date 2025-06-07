@@ -1,4 +1,4 @@
-<!-- 文件：src/pages/TrainBooking.vue -->
+<!-- src/pages/TrainBooking.vue -->
 <template>
   <div class="booking-page">
     <div class="booking-card">
@@ -6,6 +6,7 @@
 
       <!-- 车次信息展示 -->
       <div class="info">
+        <p><strong>订单编号：</strong>{{ orderNumber }}</p>
         <p><strong>车次：</strong>{{ trainId }}</p>
         <p><strong>出发城市：</strong>{{ from }}</p>
         <p><strong>到达城市：</strong>{{ to }}</p>
@@ -20,7 +21,12 @@
       <!-- 支付模块 -->
       <div class="payment-section">
         <p class="total-amount">应付金额：<span>{{ price }} 元</span></p>
-        <button class="pay-btn" @click="processPayment">立即支付</button>
+        <el-button
+            type="primary"
+            :loading="loading"
+            @click="processPayment"
+        >立即支付</el-button
+        >
       </div>
     </div>
   </div>
@@ -30,36 +36,56 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { complete } from '../api/pay'   // ← 改用 complete
 
 const route = useRoute()
 const router = useRouter()
 
 // 从路由 query 里拿参数
-const trainId    = ref(route.query.trainId || '未知')
-const from       = ref(route.query.from       || '未知')
-const to         = ref(route.query.to         || '未知')
-const departTime = ref(route.query.departTime || '')
-const arriveTime = ref(route.query.arriveTime || '')
-const seat       = ref(route.query.seat       || '无座')
-const price      = ref(route.query.price      || 0)
+const trainId     = ref(route.query.trainId     || '未知')
+const from        = ref(route.query.from        || '未知')
+const to          = ref(route.query.to          || '未知')
+const departTime  = ref(route.query.departTime  || '')
+const arriveTime  = ref(route.query.arriveTime  || '')
+const seat        = ref(route.query.seat        || '无座')
+const price       = ref(route.query.price       || 0)
+const orderNumber = ref(route.query.orderNumber || '')
 
-// 支付成功后跳转
-const processPayment = () => {
-  ElMessage.success('支付成功！')
-  setTimeout(() => {
-    router.push({ name: 'BookingSuccess' })
-  }, 1200)
+const loading = ref(false)
+
+async function processPayment() {
+  loading.value = true
+  try {
+    // 发起 complete 请求
+    const { data } = await complete({ orderNumber: orderNumber.value })
+    // 假设后端返回 { message: '支付成功', ... }
+    if (data.message) {
+      ElMessage.success(data.message)
+    } else {
+      ElMessage.success('支付完成')
+    }
+    // 跳转到支付成功页
+    router.push({
+      name: 'BookingSuccess',
+      query: { orderNumber: orderNumber.value }
+    })
+  } catch (err) {
+    console.error('complete 异常：', err)
+    const msg = err.response?.data?.message || '支付失败，请稍后重试'
+    ElMessage.error(msg)
+  } finally {
+    loading.value = false
+  }
 }
 
-// 格式化显示 ISO 时间
 function formatDateTime(isoString) {
   if (!isoString) return '--:--'
-  const date = new Date(isoString)
-  const Y = date.getFullYear()
-  const M = String(date.getMonth() + 1).padStart(2, '0')
-  const D = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const m = String(date.getMinutes()).padStart(2, '0')
+  const d = new Date(isoString)
+  const Y = d.getFullYear()
+  const M = String(d.getMonth() + 1).padStart(2, '0')
+  const D = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
   return `${Y}-${M}-${D} ${h}:${m}`
 }
 </script>
@@ -71,7 +97,6 @@ function formatDateTime(isoString) {
   align-items: center;
   min-height: 90vh;
   background: linear-gradient(to right, #e6f0ff, #f9fbff);
-  font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 
 .booking-card {
@@ -80,22 +105,18 @@ function formatDateTime(isoString) {
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   width: 380px;
-  text-align: left;
 }
 
 .booking-card h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 20px;
   text-align: center;
+  margin-bottom: 20px;
 }
 
 .info p {
   font-size: 15px;
-  color: #555;
-  margin: 8px 0;
-  line-height: 1.6;
+  margin: 6px 0;
 }
 
 hr {
@@ -111,26 +132,10 @@ hr {
 .total-amount {
   font-size: 16px;
   margin-bottom: 16px;
-  color: #333;
 }
 
 .total-amount span {
   font-weight: bold;
   color: #1677ff;
-}
-
-.pay-btn {
-  width: 100%;
-  padding: 12px 0;
-  font-size: 16px;
-  background: linear-gradient(to right, #409eff, #66b1ff);
-  border: none;
-  color: white;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-.pay-btn:hover {
-  background: linear-gradient(to right, #3a8ee6, #5caceb);
 }
 </style>
