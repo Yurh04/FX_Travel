@@ -1,20 +1,6 @@
 <template>
   <div class="flat-search-bar">
-    <!-- 行程选择 -->
-    <div class="trip-options">
-      <label>
-        <input type="radio" v-model="tripType" value="oneway" />
-        <span class="radio-label" :class="{ active: tripType === 'oneway' }">
-          单程
-        </span>
-      </label>
-      <label>
-        <input type="radio" v-model="tripType" value="round" />
-        <span class="radio-label" :class="{ active: tripType === 'round' }">
-          往返
-        </span>
-      </label>
-    </div>
+
 
     <!-- 城市与日期选择 -->
     <div class="form-row">
@@ -55,11 +41,7 @@
         <input type="date" v-model="departureDate" />
       </div>
 
-      <!-- 返程日期，仅在往返时显示 -->
-      <div class="form-box" v-if="tripType === 'round'">
-        <div class="label">返程日期</div>
-        <input type="date" v-model="returnDate" />
-      </div>
+
 
       <!-- 搜索按钮 -->
       <button class="search-btn" @click="handleSearch">搜索</button>
@@ -76,9 +58,7 @@ import CitySelect from './CitySelect.vue'
 const props = defineProps({
   from: String,
   to: String,
-  departureDate: String,
-  returnDate: String,
-  tripType: String
+  departureDate: String
 })
 
 const router = useRouter()
@@ -87,8 +67,6 @@ const router = useRouter()
 const fromCity = ref('')
 const toCity = ref('')
 const departureDate = ref('')
-const returnDate = ref('')
-const tripType = ref('oneway')
 const activeField = ref(null)
 
 // 自动回填 props 到本地值
@@ -96,8 +74,6 @@ watchEffect(() => {
   if (props.from) fromCity.value = props.from
   if (props.to) toCity.value = props.to
   if (props.departureDate) departureDate.value = props.departureDate
-  if (props.returnDate) returnDate.value = props.returnDate
-  if (props.tripType) tripType.value = props.tripType
 })
 
 // 切换城市选择器显示/隐藏
@@ -145,9 +121,7 @@ const handleSearch = () => {
     query: {
       fromCity: fromCity.value,
       toCity: toCity.value,
-      departureDate: departureDate.value,
-      returnDate: returnDate.value,
-      tripType: tripType.value
+      departureDate: departureDate.value
     }
   })
 }
@@ -178,20 +152,6 @@ onBeforeUnmount(() => {
   font-family: 'Segoe UI', 'PingFang SC', 'Helvetica Neue', sans-serif;
   max-width: 1080px;
   margin: 0 auto;
-}
-
-.trip-options {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 20px;
-  font-weight: bold;
-  font-size: 15px;
-  color: #333;
-}
-
-.trip-options input[type='radio'] {
-  margin-right: 6px;
-  accent-color: #1677ff;
 }
 
 .form-row {
