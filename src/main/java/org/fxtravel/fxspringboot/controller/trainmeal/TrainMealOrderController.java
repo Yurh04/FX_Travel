@@ -95,7 +95,7 @@ public class TrainMealOrderController {
         ));
     }
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/status/{orderId}")
     public ResponseEntity<?> getOrderPaymentStatus(@PathVariable Integer orderId) {
         TrainMealOrder order = trainMealOrderService.getOrderById(orderId);
         if (order == null) {

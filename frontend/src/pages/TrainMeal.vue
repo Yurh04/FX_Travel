@@ -40,10 +40,11 @@
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import {
-  fetchTrainMealList,
-  createTrainMealOrder
-} from '../api/trainMeal'
+import { searchByTrain, startPayment } from '../api/trainMeal'
+import { useUserStore } from '../store/user'
+
+// 引入用户store
+const userStore = useUserStore()
 
 // 默认图片
 const defaultImg = 'https://cdn-icons-png.flaticon.com/512/2975/2975175.png'
@@ -72,12 +73,9 @@ const getMenu = async () => {
 
   loading.value = true
   try {
-    // 如果你的接口需要对象，例如 { trainNumber: … }，就在这里改：
-    // const res = await fetchTrainMealList({ trainNumber: trainId.value })
-    const res = await fetchTrainMealList(trainId.value)
-    console.log('[MealOrder] fetchTrainMealList 返回 →', res)
+    const res = await searchByTrain(trainId.value)
+    console.log('[MealOrder] searchByTrain 返回 →', res)
 
-    // 兼容 res.data 本身是数组，或是 res.data.data
     let list = []
     if (Array.isArray(res.data)) {
       list = res.data
@@ -106,17 +104,22 @@ const submitOrder = async () => {
     return
   }
 
-  // 假设你有登录逻辑，这里只演示下单
+  // 检查用户是否登录
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后再订餐')
+    return
+  }
+
   try {
     const payload = {
-      // 如果后台需要 ticketReservationId，而不是 trainId，请改字段名
+      userId: userStore.userInfo.id, // 使用真实用户ID
       ticketReservationId: trainId.value,
-      trainMealId: selectedItem.value.id
+      trainMealId: selectedItem.value.id,
+      quantity: 1
     }
-    console.log('[MealOrder] createTrainMealOrder 参数 →', payload)
-    await createTrainMealOrder(payload)
+    console.log('[MealOrder] startPayment 参数 →', payload)
+    await startPayment(payload)
     ElMessage.success('订餐成功！')
-    // 下单后可以清空、跳转、刷新菜单等
     selectedItem.value = null
   } catch (err) {
     console.error('[MealOrder] 订餐失败 →', err)
@@ -126,7 +129,6 @@ const submitOrder = async () => {
 </script>
 
 <style scoped>
-/* 样式保持不变，不必修改 */
 .meal-page {
   max-width: 900px;
   margin: 40px auto;
