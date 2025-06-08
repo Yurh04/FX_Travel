@@ -39,6 +39,7 @@
               </p>
               <p><strong>车型：</strong>{{ order.train.trainType }}</p>
               <p><strong>座位类型：</strong>{{ order.trainSeat.seatType }}</p>
+              <p><strong>座位号：</strong>{{ order.seatNumber }}</p>
               <p><strong>状态：</strong>{{ formatStatus(order.status) }}</p>
             </div>
             <div class="actions">
@@ -79,7 +80,7 @@
           <el-card class="order-card">
             <div class="info">
               <p><strong>订单号：</strong>{{ meal.orderNumber }}</p>
-              <p><strong>车次订单号：</strong>{{ meal.seatOrderNumber }}</p>
+              <p><strong>车次订单号：</strong>{{ meal.reservationSeatOrderNumber }}</p>
               <p><strong>餐品：</strong>{{ meal.trainMealName }}</p>
               <p><strong>金额：</strong>￥{{ meal.totalAmount }}</p>
               <p><strong>状态：</strong>{{ formatStatus(meal.status) }}</p>
@@ -241,7 +242,10 @@ async function refundSeatOrder(seatOrder) {
   console.log('开始退款操作');
   
   try {
-    const response = await refundSeat(seatOrder);
+    const response = await refundSeat({
+      orderNumber: seatOrder.orderNumber,
+      data: seatOrder.seatNumber
+    });
     console.log('退款结果:', response);
 
     const result = response.data;
