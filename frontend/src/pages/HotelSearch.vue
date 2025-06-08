@@ -67,8 +67,8 @@
                 </div>
 
                 <div class="search-action">
-                  <el-button 
-                    type="primary" 
+                  <el-button
+                    type="primary"
                     @click="onSearch"
                     class="search-btn">
                     <i class="iconfont">&#xe615;</i>搜索
@@ -78,23 +78,14 @@
             </el-card>
           </div>
 
-          <!-- 日期选择器（添加在查询结果上方） -->
-          <div class="date-picker">
-            <label>入住日期：</label>
-              <el-date-picker 
-                v-model="checkInDate"
-                type="date"
-                placeholder="选择入住日期"
-                :picker-options="checkinOptions"
-              />
-      
-            <label style="margin-left: 20px">离店日期：</label>
-            <el-date-picker 
-              v-model="checkoutDate"
-              type="date"
-              placeholder="选择离店日期"
-              :picker-options="checkoutOptions"
-            />
+            <div class="form-box">
+              <div class="label">选择入住日期</div>
+              <input type="date" v-model="bookingForm.checkInDate" />
+            </div>
+
+          <div class="form-box">
+            <div class="label">选择离店日期</div>
+            <input type="date" v-model="bookingForm.checkOutDate" />
           </div>
           <div class="results">
             <h3>查询到的酒店</h3>
