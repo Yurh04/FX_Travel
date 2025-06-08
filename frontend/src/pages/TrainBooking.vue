@@ -7,7 +7,7 @@
       <!-- 订单信息展示 -->
       <div class="info">
         <p><strong>订单编号：</strong>{{ orderNumber }}</p>
-        <p><strong>车次：</strong>{{ trainId }}</p>
+        <p><strong>车次：</strong>{{ trainNumber }}</p>
         <p><strong>出发城市：</strong>{{ from }}</p>
         <p><strong>到达城市：</strong>{{ to }}</p>
         <p><strong>出发时间：</strong>{{ formatDateTime(departTime) }}</p>
@@ -64,6 +64,7 @@ const router = useRouter()
 const orderNumber = ref(route.query.number || '')
 const id = ref(route.query.id || '')
 const trainId = ref(route.query.trainId || '')
+const trainNumber = ref(route.query.trainNumber || '')
 const from = ref(route.query.from || '')
 const to = ref(route.query.to || '')
 const departTime = ref(route.query.departTime || '')
@@ -172,6 +173,7 @@ async function handleCancel() {
 // 支付成功处理
 function handlePaymentSuccess() {
   stopPolling()
+  localStorage.setItem('currestTrainId', trainId.value)
   pollingMessage.value = '支付成功，正在跳转...'
   setTimeout(() => {
     router.push({

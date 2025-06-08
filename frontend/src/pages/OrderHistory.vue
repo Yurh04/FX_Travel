@@ -195,7 +195,7 @@ const copyMeal = meal => {
 function goToMeal(trainNumber) {
   router.push({
     name: 'TrainMeal',
-    query: { trainId: trainNumber }
+    query: { trainNumber: trainNumber }
   })
 }
 
