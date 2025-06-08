@@ -298,7 +298,7 @@ async function refundRoomOrder(roomOrder) {
   console.log('开始退款操作');
   
   try {
-    const response = await refundRoom(roomOrder);
+    const response = await refundRoom({orderNumber: roomOrder.orderNumber});
     console.log('退款结果:', response);
 
     const result = response.data;

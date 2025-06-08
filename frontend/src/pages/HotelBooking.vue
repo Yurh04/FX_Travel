@@ -55,7 +55,7 @@ import {ref, onMounted, onUnmounted, watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { complete, fail } from '../api/pay'
-import { doAsync } from '../api/train'
+import { doAsync } from '../api/hotel.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -175,8 +175,7 @@ function handlePaymentSuccess() {
   pollingMessage.value = '支付成功，正在跳转...'
   setTimeout(() => {
     router.push({
-      name: 'BookingSuccess',
-      query: { orderNumber: orderNumber.value }
+      name: 'HotelHome'
     })
   }, 1500)
 }

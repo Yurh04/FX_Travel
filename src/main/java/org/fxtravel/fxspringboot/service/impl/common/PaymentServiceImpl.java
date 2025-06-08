@@ -150,6 +150,10 @@ public class PaymentServiceImpl implements PaymentService {
     public boolean refundPayment(String orderNumber, Object data) {
         // 检查当前状态是否为COMPLETED(且不是FINISHED)
         payment payment = paymentMapper.selectByOrderNumber(orderNumber);
+
+        System.out.println(payment);
+        System.out.println(orderNumber);
+
         if (payment == null ||
                 payment.getStatus() != E_PaymentStatus.COMPLETED) {
             return false;

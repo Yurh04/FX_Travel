@@ -14,7 +14,8 @@ import BookingSuccess from '../pages/BookingSuccess.vue'
 import AboutUs from "../pages/AboutUs.vue"
 import MessageCenter from "../pages/MessageCenter.vue"
 import CustomerService from '../pages/CustomerService.vue'
-import TrainMealPayment from "../pages/TrainMealPayment.vue"; // 或者 .vue，看你实际用哪种
+import TrainMealPayment from "../pages/TrainMealPayment.vue";
+import HotelBooking from "../pages/HotelBooking.vue"; // 或者 .vue，看你实际用哪种
 
 const routes = [
     // 首页不需要登录
@@ -23,6 +24,12 @@ const routes = [
     { path: '/hotels/:id',          name: 'HotelDetail',     component: HotelDetail,   props: true },
     { path: '/bookingHotel/:bookingId?', name: 'BookingForm', component: BookingForm, props: true },
     { path: '/aboutUs', name: "aboutUs", component: AboutUs, props: true},
+    {
+        path: '/hotel/book',
+        name: 'HotelBooking',
+        component: HotelBooking,
+        meta: { requiresAuth: true }
+    },
     // 新增：消息中心
     { path: '/messages', name: 'MessageCenter', component: MessageCenter},
     // 火车模块，需要登录才能访问

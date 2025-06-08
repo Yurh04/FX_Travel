@@ -17,7 +17,7 @@ export const bookRoom = (params) => request.post('/hotel/room/get', params)
 
 export const doAsync = (orderId) => request.get(`/hotel/${orderId}`)
 
-export const refundRoom = (params) => request.post('/hotel/refund', {params: params} )
+export const refundRoom = (params) => request.post('/hotel/refund', params )
 
 // 过时
 export function advancedSearch(filters) {

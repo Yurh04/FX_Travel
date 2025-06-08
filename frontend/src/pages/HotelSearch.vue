@@ -82,7 +82,7 @@
           <div class="date-picker">
             <label>入住日期：</label>
               <el-date-picker 
-                v-model="checkinDate"
+                v-model="checkInDate"
                 type="date"
                 placeholder="选择入住日期"
                 :picker-options="checkinOptions"
@@ -103,7 +103,7 @@
               :key="hotel.id"
               class="hotel-item"
             >
-              <el-card class="hotel-card" shadow="hover" @click="goDetail(hotel.id)">
+              <el-card class="hotel-card" shadow="hover">
                 <div class="info">
                   <p><strong>酒店名称：</strong>{{ hotel.hotel.name }}</p>
                   <p><strong>酒店所在城市：</strong>{{ hotel.hotel.destination }}</p>
@@ -119,7 +119,7 @@
                       </span>
                       <button
                         class="book-btn"
-                        @click="startBookRoom(roomItem)"
+                        @click="startBookRoom(hotel, roomItem, bookingForm.checkInDate, bookingForm.checkOutDate)"
                         :disabled="roomItem.remain === 0"
                       >
                         {{ roomItem.remain > 0 ? '预订' : '售罄' }}
@@ -155,17 +155,19 @@ const bookingForm = ref({
 })
 
 const userId = userStore.userInfo?.id
-async function startBookRoom(roomItem,checkInDate,checkOutDate) {
-  if (!checkinDate || !checkoutDate) {
-    this.$message.error("请选择入住和离店日期");
+async function startBookRoom(hotel, roomItem, checkInDate, checkOutDate) {
+  console.log('预订响应', hotel, roomItem, checkInDate, checkOutDate)
+
+  if (!checkInDate || !checkOutDate) {
+    ElMessage.error("请选择入住和离店日期");
     return;
   }
   const payload = {
     hotelId: roomItem.hotelId,
     roomId: roomItem.id,
     userId: userId,
-    checkInDate,
-    checkOutDate
+    checkInDate: checkInDate,
+    checkOutDate: checkOutDate
   }
 
   try {
@@ -175,23 +177,28 @@ async function startBookRoom(roomItem,checkInDate,checkOutDate) {
       ElMessage.success(data.message)
     }
 
-    // 确保获取到 id 和 number
     const orderId = data.id
     const orderNumber = data.number
-    const seat = data.seat
 
     if (!orderId || !orderNumber) {
       ElMessage.error('下单失败：未获取订单信息')
       return
     }
 
+    // 关键修改点：确保参数名称与支付页接收的名称完全一致
     await router.push({
-      name: 'TrainBooking',
+      name: 'HotelBooking',
       query: {
-        ...payload,
         id: orderId,
         number: orderNumber,
-        seat: seat
+        name: hotel.hotel.name, // 支付页接收的是name
+        destination: hotel.hotel.destination,
+        address: hotel.hotel.address,
+        roomName: roomItem.name, // 支付页接收的是roomName（原roomItem）
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        pricePerNight: roomItem.pricePerNight,
+        totalAmount: data.totalAmount
       }
     })
   } catch (err) {
@@ -199,11 +206,6 @@ async function startBookRoom(roomItem,checkInDate,checkOutDate) {
     const msg = err.response?.data?.message || '下单失败，请稍后重试'
     ElMessage.error(msg)
   }
-}
-
-function showBookingDialog(hotel) {
-  selectedHotel.value = hotel
-  bookingDialogVisible.value = true
 }
 
 function calculateTotalPrice() {
