@@ -77,32 +77,58 @@
               </div>
             </el-card>
           </div>
-          <div v-if="hotels.length > 0" class="results">
+
+          <!-- 日期选择器（添加在查询结果上方） -->
+          <div class="date-picker">
+            <label>入住日期：</label>
+              <el-date-picker 
+                v-model="checkinDate"
+                type="date"
+                placeholder="选择入住日期"
+                :picker-options="checkinOptions"
+              />
+      
+            <label style="margin-left: 20px">离店日期：</label>
+            <el-date-picker 
+              v-model="checkoutDate"
+              type="date"
+              placeholder="选择离店日期"
+              :picker-options="checkoutOptions"
+            />
+          </div>
+          <div class="results">
+            <h3>查询到的酒店</h3>
             <div
               v-for="hotel in hotels"
               :key="hotel.id"
               class="hotel-item"
             >
               <el-card class="hotel-card" shadow="hover" @click="goDetail(hotel.id)">
-                <img :src="hotel.img || defaultImg" class="hotel-thumb" />
-                <div class="hotel-info">
-                  <h3 class="hotel-name">{{ hotel.name }}</h3>
-                  <div class="hotel-destination">{{ hotel.destination }}</div>
-                  <div class="hotel-rating">
-                    <i v-for="n in Math.round(hotel.rating)" :key="n" class="iconfont">&#xe60a;</i>
-                    <span>{{ hotel.rating.toFixed(1) }} 星</span>
-                  </div>
-                  <div class="hotel-price">￥{{ hotel.lowestPrice }} 起</div>
-                  <el-button type="primary" size="small" @click.stop="showBookingDialog(hotel)" class="book-btn">
-                    立即预订
-                  </el-button>
+                <div class="info">
+                  <p><strong>酒店名称：</strong>{{ hotel.hotel.name }}</p>
+                  <p><strong>酒店所在城市：</strong>{{ hotel.hotel.destination }}</p>
+                  <p><strong>酒店详细地址 </strong>{{ hotel.hotel.address }}</p>
+                  <p><strong>酒店简介</strong> {{ hotel.hotel.description }}</p>
+                </div>
+                <div v-if="hotel.rooms && hotel.rooms.length" class="seat-info">
+                  <h4>房型 & 每晚房价：</h4>
+                  <ul>
+                    <li v-for="roomItem in hotel.rooms" :key="roomItem.id" class="seat-item">
+                      <span>
+                        {{ roomItem.name }} – ¥{{ roomItem.pricePerNight }} – 剩余：{{ roomItem.remain }}
+                      </span>
+                      <button
+                        class="book-btn"
+                        @click="startBookRoom(roomItem)"
+                        :disabled="roomItem.remain === 0"
+                      >
+                        {{ roomItem.remain > 0 ? '预订' : '售罄' }}
+                      </button>
+                  </li>
+                </ul>
                 </div>
               </el-card>
             </div>
-          </div>
-
-          <div v-else class="no-results">
-            <p>未找到符合条件的酒店</p>
           </div>
         </main>
       </div>
@@ -113,7 +139,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { searchHotels, bookRoom } from '../api/hotel'
+import hotel, { searchHotels, bookRoom } from '../api/hotel'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../store/user'
@@ -127,6 +153,53 @@ const bookingForm = ref({
   checkOutDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
   roomCount: 1
 })
+
+const userId = userStore.userInfo?.id
+async function startBookRoom(roomItem,checkInDate,checkOutDate) {
+  if (!checkinDate || !checkoutDate) {
+    this.$message.error("请选择入住和离店日期");
+    return;
+  }
+  const payload = {
+    hotelId: roomItem.hotelId,
+    roomId: roomItem.id,
+    userId: userId,
+    checkInDate,
+    checkOutDate
+  }
+
+  try {
+    const { data } = await bookRoom(payload)
+
+    if (data.message) {
+      ElMessage.success(data.message)
+    }
+
+    // 确保获取到 id 和 number
+    const orderId = data.id
+    const orderNumber = data.number
+    const seat = data.seat
+
+    if (!orderId || !orderNumber) {
+      ElMessage.error('下单失败：未获取订单信息')
+      return
+    }
+
+    await router.push({
+      name: 'TrainBooking',
+      query: {
+        ...payload,
+        id: orderId,
+        number: orderNumber,
+        seat: seat
+      }
+    })
+  } catch (err) {
+    console.error('startPayment 异常：', err)
+    const msg = err.response?.data?.message || '下单失败，请稍后重试'
+    ElMessage.error(msg)
+  }
+}
 
 function showBookingDialog(hotel) {
   selectedHotel.value = hotel
@@ -229,15 +302,12 @@ async function loadHotels() {
       destination: params.value.destination.trim(),
       namePattern: params.value.namePattern?.trim() || null
     }
+    console.log('begin')
     const response = await searchHotels(paramsJson)
     if (!response?.data) throw new Error('无效的响应格式')
-    hotels.value = response.data
-      .filter(item => item.hotel && Array.isArray(item.hotel.rooms))
-      .map(item => ({
-        ...item.hotel,
-        lowestPrice: item.hotel.rooms.length > 0 ? Math.min(...item.hotel.rooms.map(r => r.pricePerNight)) : 0
-      }))
-    if (hotels.value.length === 0) ElMessage.info('未找到符合条件的酒店')
+    console.log('middle')
+    hotels.value = response.data?.data
+    console.log(hotels)
   } catch (err) {
     ElMessage.error('搜索酒店失败: ' + (err.response?.data?.message || err.message))
     hotels.value = []
@@ -569,5 +639,42 @@ function goDetail(hotelId) {
   font-size: 14px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   word-break: break-all;
+}
+
+.seat-info h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.seat-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+}
+
+
+.book-btn {
+  background: #409eff;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.book-btn:disabled {
+  background: #d9d9d9;
+  cursor: not-allowed;
+}
+.book-btn:not(:disabled):hover {
+  background: #3a8ee6;
+}
+.seat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 </style>
