@@ -7,9 +7,6 @@ const request = axios.create({
     withCredentials: true
 })
 
-// ———————— 后端基础地址 ————————
-// 请根据实际部署地址修改。如果后端同源，也可以直接写 '/api'。
-const BASE_URL = 'http://localhost:8080'
 
 export const searchByTrain = (trainId) => request.get(`train/meal/${trainId}`)
 
