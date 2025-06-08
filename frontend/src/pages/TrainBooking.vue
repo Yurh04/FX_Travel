@@ -173,6 +173,7 @@ async function handleCancel() {
 function handlePaymentSuccess() {
   stopPolling()
   localStorage.setItem('currestTrainId', trainId.value)
+  localStorage.setItem('currentSeatOrderId', id.value)
   pollingMessage.value = '支付成功，正在跳转...'
   setTimeout(() => {
     router.push({

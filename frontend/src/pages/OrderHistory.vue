@@ -48,7 +48,7 @@
               <el-button
                   size="small"
                   type="warning"
-                  @click="goToMeal(order.train.trainNumber)"
+                  @click="goToMeal(order)"
               >订餐</el-button
               >
               <el-button
@@ -79,7 +79,7 @@
           <el-card class="order-card">
             <div class="info">
               <p><strong>订单号：</strong>{{ meal.orderNumber }}</p>
-              <p><strong>车次订单号：</strong>{{ meal.reservationSeatOrderNumber }}</p>
+              <p><strong>车次订单号：</strong>{{ meal.seatOrderNumber }}</p>
               <p><strong>餐品：</strong>{{ meal.trainMealName }}</p>
               <p><strong>金额：</strong>￥{{ meal.totalAmount }}</p>
               <p><strong>状态：</strong>{{ formatStatus(meal.status) }}</p>
@@ -229,10 +229,11 @@ const copyMeal = meal => {
 }
 
 // 跳转订餐
-function goToMeal(trainNumber) {
+function goToMeal(order) {
+  localStorage.setItem('currestTrainId', order.train.id)
+  localStorage.setItem('currentSeatOrderId', order.id)
   router.push({
-    name: 'TrainMeal',
-    query: { trainNumber: trainNumber }
+    name: 'TrainMeal'
   })
 }
 
@@ -251,15 +252,11 @@ async function refundSeatOrder(seatOrder) {
       window.location.reload();
     } else if (result === false) {
       console.log('退款失败');
-      alert('退款失败，请稍后重试');
-      
-    } else {
-      console.log('未知返回值:', result);
-      alert('退款状态未知');
+      alert('退款失败');
     }
   } catch (error) {
-    console.error('退款异常:', error);
-    alert('退款操作异常，请稍后重试');
+    console.error('退款异常:', error.response.data.error);
+    alert('退款操作异常,请检查是否有未取消餐品');
   } finally {
     fetchOrders;
   }

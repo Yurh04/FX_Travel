@@ -75,7 +75,6 @@ const loading = ref(false)
 
 // 获取当前关联订单
 const trainId = localStorage.getItem('currestTrainId')
-const seatOrderNumber = localStorage.getItem('currentSeatOrderNumber')
 const seatOrderId = localStorage.getItem('currentSeatOrderId')
 
 // 新增：响应式数据
@@ -174,7 +173,7 @@ const submitOrder = async (item) => {
     }})
   } catch (err) {
     console.error('[MealOrder] 订餐失败 →', err)
-    alert(err.message || '订餐失败，请重试')
+    alert('订餐失败,请先在列车上购票');
   }
 }
 

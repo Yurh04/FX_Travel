@@ -133,10 +133,12 @@ public class TrainSeatOrderController {
 
         TrainSeatOrder order = trainSeatOrderService.getOrderByNumber(request.getOrderNumber());
         if (order == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "订单无效"));
         }
         if (trainMealOrderMapper.existsBySeatOrderId(order.getId())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("有未取消的餐品");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "有未取消的餐品"));
         }
 
         return ResponseEntity.ok(paymentService.refundPayment(request.getOrderNumber(), request.getData()));
