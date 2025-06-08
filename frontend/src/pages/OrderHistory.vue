@@ -5,45 +5,13 @@
 
     <!-- 🔍 筛选工具条 -->
     <div class="filters">
-      <el-input
-          v-model="keyword"
-          placeholder="搜索车次/站点/餐品"
-          clearable
-          class="filter-item"
-      />
-      <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          class="filter-item"
-      />
-      <el-select
-          v-model="selectedStatus"
-          placeholder="订单状态"
-          clearable
-          class="filter-item"
-      >
-        <el-option label="已完成" value="COMPLETED" />
-        <el-option label="已取消" value="CANCELLED" />
-        <el-option label="处理中" value="PENDING" />
-      </el-select>
       <el-button type="primary" @click="fetchOrders" class="filter-item">
         查询
       </el-button>
     </div>
 
-    <div v-if="loading" class="loading">订单加载中...</div>
-    <div
-        v-else-if="!filteredTickets.length && !filteredMeals.length"
-        class="empty"
-    >
-      暂无订单记录
-    </div>
-
     <!-- 🎫 车票订单 -->
-    <div v-if="filteredTickets.length" class="section">
+    <div class="section">
       <h3>车票订单</h3>
       <el-row :gutter="20">
         <el-col
@@ -84,7 +52,7 @@
     </div>
 
     <!-- 🍱 订餐订单 -->
-    <div v-if="filteredMeals.length" class="section">
+    <div class="section">
       <h3>订餐订单</h3>
       <el-row :gutter="20">
         <el-col
@@ -111,6 +79,37 @@
         </el-col>
       </el-row>
     </div>
+    <!-- 酒店订单 -->
+    <div class="section">
+      <h3>酒店订单</h3>
+      <el-row :gutter="20">
+        <el-col
+            :xs="24"
+            :sm="12"
+            :md="8"
+            v-for="hotel in hotelOrders"
+            :key="hotel.id"
+        >
+          <el-card class="order-card">
+            <div class="info">
+              <p><strong>订单号：</strong>{{ hotel.id }}</p>
+              <p><strong>酒店名：</strong>{{ hotel.hotelName }}</p>
+              <p><strong>房间类型：</strong>{{ hotel.roomName }}</p>
+              <p><strong>入住时间：</strong>{{ hotel.checkInDate }}</p>
+              <p><strong>退房时间：</strong>{{ hotel.checkInDate }}</p>
+              <p><strong>金额：</strong>￥{{ hotel.totalAmount }}</p>
+              <p><strong>状态：</strong>{{ formatStatus(hotel.status) }}</p>
+              <p><strong>订单生成时间：</strong>{{ formatTime(hotel.createTime) }}</p>
+            </div>
+            <div class="actions">
+              <el-button size="small" @click="copyMeal(meal)"
+              >复制订单</el-button
+              >
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 
@@ -121,6 +120,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '../store/user'
 import { searchTrainSeatOrder } from '../api/train' 
 import { searchTrainMealOrder } from '../api/trainMeal'
+import { getOrderRooms } from '../api/hotel'
 
 
 const userStore = useUserStore()
@@ -130,6 +130,7 @@ const userId = userStore.userInfo?.id
 
 const ticketOrders = ref([])
 const mealOrders = ref([])
+const hotelOrders = ref([])
 const loading = ref(false)
 
 const keyword = ref('')
@@ -143,7 +144,8 @@ const formatStatus = s =>
       COMPLETED: '已完成',
       CANCELLED: '已取消',
       PENDING: '处理中',
-      IDLE: '未开始'
+      IDLE: '未开始',
+      FAILED: '支付失败'
     }[s] || s)
 
 // 拉取订单数据
@@ -162,6 +164,11 @@ async function fetchOrders() {
     // ✅ 保留原来的订餐订单（你可以封装成接口再替换）
     const mealRes = await searchTrainMealOrder(userId)
     mealOrders.value = mealRes?.data.data || []
+
+    const hotelRes = await getOrderRooms(userId)
+    console.log(hotelRes)
+    hotelOrders.value = hotelRes?.data || []
+    console.log(hotelOrders)
   } catch (e) {
     console.error(e)
     ElMessage.error('订单加载失败')
@@ -219,6 +226,7 @@ const filteredMeals = computed(() =>
       return matchKeyword && matchStatus
     })
 )
+
 </script>
 
 
