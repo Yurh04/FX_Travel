@@ -13,7 +13,8 @@ import AuthPage from '../pages/auth-page.vue'
 import BookingSuccess from '../pages/BookingSuccess.vue'
 import AboutUs from "../pages/AboutUs.vue"
 import MessageCenter from "../pages/MessageCenter.vue"
-import CustomerService from '../pages/CustomerService.vue' // 或者 .vue，看你实际用哪种
+import CustomerService from '../pages/CustomerService.vue'
+import TrainMealPayment from "../pages/TrainMealPayment.vue"; // 或者 .vue，看你实际用哪种
 
 const routes = [
     // 首页不需要登录
@@ -52,6 +53,12 @@ const routes = [
         path: '/meal',
         name: 'TrainMeal',
         component: TrainMeal,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/meal/purchase',
+        name: 'MealPurchase',
+        component: TrainMealPayment,
         meta: { requiresAuth: true }
     },
     {

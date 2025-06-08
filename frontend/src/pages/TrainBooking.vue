@@ -86,7 +86,6 @@ onMounted(() => {
   startPolling()
 })
 
-console.log('123')
 startPolling()
 
 // 方案2：监听路由参数变化（可选）
@@ -187,7 +186,9 @@ function handlePaymentSuccess() {
 async function handlePaymentFailure(message) {
   stopPolling()
   pollingMessage.value = message
-  router.push({name: 'HotelHome'})
+  setTimeout(() => {
+    router.push({ name: 'HotelHome' })
+  }, 1500)
 }
 
 // 格式化时间

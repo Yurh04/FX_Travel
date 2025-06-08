@@ -157,8 +157,21 @@ const submitOrder = async (item) => {
       quantity: 1
     }
     console.log('[MealOrder] startPayment 参数 →', payload)
-    await startPayment(payload)
-    alert('订餐成功！')
+    const { data } = await startPayment(payload)
+
+    const orderId = data.id
+    const orderNumber = data.number
+
+    await router.push({name: 'MealPurchase',
+      query: {
+        mealId: item.id,
+        orderId: orderId,
+        orderNumber: orderNumber,
+        trainNumber: trainInfo.value.trainNumber,
+        name: item.name,
+        description: item.description,
+        price: item.price.toFixed(2)
+    }})
   } catch (err) {
     console.error('[MealOrder] 订餐失败 →', err)
     alert(err.message || '订餐失败，请重试')

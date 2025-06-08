@@ -23,7 +23,7 @@
       <hr />
 
       <div class="payment-actions">
-        <p class="total">应付金额：<span>{{ totalPrice }} 元</span></p>
+        <p class="total">应付金额：<span>{{ mealInfo.price }} 元</span></p>
         <div class="buttons">
           <button
               class="pay-btn"
@@ -40,9 +40,9 @@
             {{ cancelLoading ? '取消中...' : '放弃支付' }}
           </button>
         </div>
-        <div v-if="statusMessage" class="status-message">
-          <span v-if="isProcessing" class="loading-icon">⏳</span>
-          {{ statusMessage }}
+        <div v-if="pollingMessage" class="status-message">
+          <span v-if="isPolling" class="loading-icon">⏳</span>
+          {{ pollingMessage }}
         </div>
       </div>
     </div>
@@ -50,96 +50,108 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import {ref, onMounted, onUnmounted, watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import {doAsync} from "../api/trainMeal.js";
+import {complete, fail} from "../api/pay.js";
+import {ElMessage} from "element-plus";
 
 const route = useRoute()
 const router = useRouter()
 
 // 订单数据
-const orderNumber = ref('ML' + Date.now().toString().slice(-8))
 const trainInfo = ref({
-  trainNumber: route.query.trainNumber || 'G101',
-  fromStation: route.query.from || '北京',
-  toStation: route.query.to || '上海'
+  trainNumber: route.query.trainNumber || ''
 })
 const mealInfo = ref({
   mealId: route.query.mealId || '',
-  orderNumber: route.query.orderNumber || '',
-  name: route.query.mealName || '暂无名称',
-  description: route.query.mealDesc || '暂无描述',
-  price: route.query.mealPrice || 0
+  name: route.query.name || '暂无名称',
+  description: route.query.description || '暂无描述',
+  price: route.query.price || 0
 })
+
+const id = ref(route.query.orderId || 0)
+const orderNumber = ref(route.query.orderNumber || '')
 
 // 状态控制
 const payLoading = ref(false)
 const cancelLoading = ref(false)
-const remainingTime = ref(300) // 5分钟支付时限
-const statusMessage = ref('')
-const isProcessing = ref(false)
-let countdownInterval = null
+const pollingInterval = ref(null)
+const remainingTime = ref(400) // 5分钟支付时限
+const pollingMessage = ref('')
+const isPolling = ref(false)
 
 // 生命周期
 onMounted(() => {
-  startCountdown()
+  startPolling()
 })
 
-onUnmounted(() => {
-  stopCountdown()
-})
+startPolling()
 
-// 倒计时控制
-function startCountdown() {
-  stopCountdown()
-  countdownInterval = setInterval(() => {
-    if (remainingTime.value > 0) {
-      remainingTime.value--
-    } else {
-      handlePaymentFailure('支付超时')
-    }
+// 轮询控制
+function startPolling() {
+  stopPolling()
+  isPolling.value = true
+  pollingMessage.value = '正在获取订单状态...'
+
+  // 立即检查一次
+  checkOrderStatus()
+
+  pollingInterval.value = setInterval(() => {
+    checkOrderStatus()
   }, 1000)
 }
 
-function stopCountdown() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval)
-    countdownInterval = null
+function stopPolling() {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+    pollingInterval.value = null
+  }
+  isPolling.value = false
+}
+
+// 检查订单状态
+async function checkOrderStatus() {
+  try {
+    const { data } = await doAsync(id.value)
+
+    if (data.remainingTimeSeconds) {
+      remainingTime.value = data.remainingTimeSeconds
+    }
+
+    if (data.currentStatus === 'COMPLETED') {
+      handlePaymentSuccess()
+    } else if (data.currentStatus === 'FAILED') {
+      await handlePaymentFailure('超时或主动放弃')
+    }
+  } catch (error) {
+    console.error('轮询请求失败:', error)
   }
 }
 
-// 支付处理
+// 立即支付
 async function handlePayment() {
   payLoading.value = true
-  statusMessage.value = '正在处理支付...'
-  isProcessing.value = true
-
   try {
-    // 这里替换为实际的支付API调用
-    // const res = await mealPaymentApi(orderNumber.value, mealInfo.value.id)
-    await new Promise(resolve => setTimeout(resolve, 1500)) // 模拟API延迟
-
-    handlePaymentSuccess()
+    const payRes = await complete({ orderNumber: orderNumber.value })
+    console.log(payRes)
+    if (payRes.value) {
+      pollingMessage.value = '支付请求已提交，请稍候...'
+    }
   } catch (error) {
-    handlePaymentFailure('支付失败: ' + (error.message || '未知错误'))
+    ElMessage.error(error.response?.data?.message || '支付请求失败')
   } finally {
     payLoading.value = false
-    isProcessing.value = false
   }
 }
 
-// 取消处理
+// 放弃支付
 async function handleCancel() {
   cancelLoading.value = true
-  statusMessage.value = '正在取消订单...'
-
   try {
-    // 这里替换为实际的取消API调用
-    // await cancelMealOrder(orderNumber.value)
-    await new Promise(resolve => setTimeout(resolve, 800)) // 模拟API延迟
-
-    router.push({ name: 'HotelHome' })
+    await fail({ orderNumber: orderNumber.value })
   } catch (error) {
-    statusMessage.value = '取消失败: ' + (error.message || '未知错误')
+    ElMessage.error(error.response?.data?.message || '取消失败')
   } finally {
     cancelLoading.value = false
   }
@@ -147,26 +159,20 @@ async function handleCancel() {
 
 // 支付成功处理
 function handlePaymentSuccess() {
-  stopCountdown()
-  statusMessage.value = '支付成功！即将返回...'
+  stopPolling()
+  pollingMessage.value = '支付成功，正在跳转...'
   setTimeout(() => {
-    router.push({
-      name: 'MealOrderSuccess',
-      query: {
-        orderNumber: orderNumber.value,
-        mealName: mealInfo.value.name
-      }
-    })
+    router.push({ name: 'HotelHome' })
   }, 1500)
 }
 
 // 支付失败处理
-function handlePaymentFailure(message) {
-  stopCountdown()
-  statusMessage.value = message
+async function handlePaymentFailure(message) {
+  stopPolling()
+  pollingMessage.value = message
   setTimeout(() => {
     router.push({ name: 'HotelHome' })
-  }, 2000)
+  }, 1500)
 }
 
 // 格式化时间
