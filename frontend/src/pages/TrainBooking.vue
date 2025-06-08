@@ -85,6 +85,9 @@ onMounted(() => {
   startPolling()
 })
 
+console.log('123')
+startPolling()
+
 // 方案2：监听路由参数变化（可选）
 watch(
     () => route.query.id,
@@ -108,14 +111,14 @@ function startPolling() {
 
   // 设置轮询（每0.5秒一次）
   pollingInterval.value = setInterval(() => {
-    remainingTime.value -= 0.5
+    remainingTime.value -= 1.0
     if (remainingTime.value <= 0) {
       stopPolling()
       pollingMessage.value = '支付超时，订单已自动取消'
       return
     }
     checkOrderStatus()
-  }, 500)
+  }, 1000)
 }
 
 function stopPolling() {
