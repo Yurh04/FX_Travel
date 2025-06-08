@@ -99,11 +99,10 @@ public class TrainSeatOrderController {
             return ResponseEntity.ok(Collections.emptyList());
         }
 
-
         // 3. 使用Stream转换DTO
         List<TrainSeatOrderDTO> dtos = orders.stream()
                 .map(order -> {
-                    Train train = trainMapper.selectById(order.getTrainSeatId());
+                    Train train = trainMapper.selectById(order.getTrainId());
                     TrainSeat seat = trainSeatMapper.selectById(order.getTrainSeatId());
 
                     return new TrainSeatOrderDTO(
