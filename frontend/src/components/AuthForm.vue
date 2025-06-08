@@ -88,7 +88,7 @@ const buttonTextMap = {
 
 const showField = (field) => {
   const fieldsMap = {
-    login: ['username', 'password'],
+    login: ['email', 'password'],
     register: ['email', 'username', 'password', 'confirmPassword', 'gender']
   }
   return fieldsMap[props.type].includes(field)
