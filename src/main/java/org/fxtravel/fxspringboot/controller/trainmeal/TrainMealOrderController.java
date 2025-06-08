@@ -73,12 +73,12 @@ public class TrainMealOrderController {
 
     @GetMapping("/orders/by-ticket/{seatOrderId}")
     public ResponseEntity<?> getOrdersBySeatOrder(
-            @PathVariable Integer seatOrderId, BindingResult bindingResult,
-            HttpSession session) {
+            @PathVariable Integer seatOrderId, HttpSession session) {
         User user = (User) session.getAttribute("user");
 
-        ResponseEntity<? extends Map<String, ?>> errors = AuthUtil.check(bindingResult, user);
-        if (errors != null) return errors;
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "未登录"));
+        }
 
         List<TrainMealOrder> orders = trainMealOrderService.getOrdersBySeatOrder(seatOrderId);
         return ResponseEntity.ok(Map.of(
@@ -97,7 +97,7 @@ public class TrainMealOrderController {
 
         // 必须有购票
         TrainMeal meal = trainMealService.getMealById(orderDTO.getTrainMealId());
-        if (!trainSeatOrderMapper.existsBySeatAndUser(meal.getId(), user.getId())) {
+        if (!trainSeatOrderMapper.existsByTrainAndUser(meal.getTrainId(), user.getId())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "error", "未在对应列车上购票"));
         }
@@ -108,7 +108,7 @@ public class TrainMealOrderController {
                 "id", order.getId(),
                 "number", order.getOrderNumber(),
                 "meal", order.getTrainMealId(),
-                "seatOrder", order.getSeatOrderNumber()
+                "seatOrder", order.getSeatOrderId()
         ));
     }
 

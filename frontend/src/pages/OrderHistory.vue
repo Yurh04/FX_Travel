@@ -19,11 +19,11 @@
             :sm="12"
             :md="8"
             v-for="order in filteredTickets"
-            :key="order.id"
+            :key="order.mealId"
         >
           <el-card class="order-card">
             <div class="info">
-              <p><strong>订单号：</strong>{{ order.id }}</p>
+              <p><strong>订单号：</strong>{{ order.mealId }}</p>
               <p><strong>车次：</strong>{{ order.train.trainNumber }}</p>
               <p><strong>出发：</strong>{{ order.train.fromStation }}</p>
               <p><strong>到达：</strong>{{ order.train.toStation }}</p>
@@ -60,7 +60,7 @@
             :sm="12"
             :md="8"
             v-for="meal in filteredMeals"
-            :key="meal.id"
+            :key="meal.mealId"
         >
           <el-card class="order-card">
             <div class="info">
@@ -88,11 +88,11 @@
             :sm="12"
             :md="8"
             v-for="hotel in hotelOrders"
-            :key="hotel.id"
+            :key="hotel.mealId"
         >
           <el-card class="order-card">
             <div class="info">
-              <p><strong>订单号：</strong>{{ hotel.id }}</p>
+              <p><strong>订单号：</strong>{{ hotel.mealId }}</p>
               <p><strong>酒店名：</strong>{{ hotel.hotelName }}</p>
               <p><strong>房间类型：</strong>{{ hotel.roomName }}</p>
               <p><strong>入住时间：</strong>{{ hotel.checkInDate }}</p>
@@ -126,7 +126,7 @@ import { getOrderRooms } from '../api/hotel'
 const userStore = useUserStore()
 const router = useRouter()
 
-const userId = userStore.userInfo?.id
+const userId = userStore.userInfo?.mealId
 
 const ticketOrders = ref([])
 const mealOrders = ref([])
@@ -179,13 +179,13 @@ async function fetchOrders() {
 
 // 复制订单信息
 const copyTicket = order => {
-  const text = `车票订单：订单号 ${order.id}，车次 ${order.train.trainNumber}，${order.train.fromStation}→${order.train.toStation}，时间 ${formatTime(order.train.departureTime)}，状态 ${formatStatus(order.status)}`
+  const text = `车票订单：订单号 ${order.mealId}，车次 ${order.train.trainNumber}，${order.train.fromStation}→${order.train.toStation}，时间 ${formatTime(order.train.departureTime)}，状态 ${formatStatus(order.status)}`
   navigator.clipboard.writeText(text).then(() => {
     ElMessage.success('车票订单信息已复制')
   })
 }
 const copyMeal = meal => {
-  const text = `订餐订单：订单号 ${meal.id}，车次 ${meal.trainNumber}，餐品 ${meal.items?.join('、')}，金额 ￥${meal.total}，状态 ${formatStatus(meal.status)}`
+  const text = `订餐订单：订单号 ${meal.mealId}，车次 ${meal.trainNumber}，餐品 ${meal.items?.join('、')}，金额 ￥${meal.total}，状态 ${formatStatus(meal.status)}`
   navigator.clipboard.writeText(text).then(() => {
     ElMessage.success('订餐订单信息已复制')
   })
@@ -195,7 +195,7 @@ const copyMeal = meal => {
 function goToMeal(trainNumber) {
   router.push({
     name: 'TrainMeal',
-    query: { trainId: trainNumber }
+    query: { trainNumber: trainNumber }
   })
 }
 
