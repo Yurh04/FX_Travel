@@ -15,9 +15,9 @@ export const searchHotels = (params) => request.post('/hotel/room/by-dest', para
 
 export const bookRoom = (params) => request.post('/hotel/room/get', params)
 
-export const doAsync = (orderId) => request().get('/hotel', { params: orderId} )
+export const doAsync = (orderId) => request.get('/hotel', { params: orderId} )
 
-export const refundRoom = (params) => request().post('/hotel/refund', {params: params} )
+export const refundRoom = (params) => request.post('/hotel/refund', params)
 
 export function advancedSearch(filters) {
   return client.post('/hotels/search', filters)

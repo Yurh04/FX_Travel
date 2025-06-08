@@ -56,6 +56,7 @@ public class TrainMealOrderController {
         for (TrainMealOrder order : orders) {
             TrainMealOrderResponse orderResponse = new TrainMealOrderResponse(
                     order.getId(),
+                    order.getOrderNumber(),
                     order.getQuantity(),
                     order.getTotalAmount(),
                     trainMealMapper.selectById(order.getTrainMealId()).getName(),
