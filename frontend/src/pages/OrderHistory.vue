@@ -172,7 +172,7 @@ const selectedStatus = ref('')
 const dateRange = ref([])
 
 const goBack=()=>{
-  window.location.href = 'http://localhost:5173/';
+  router.push({name: "HotelHome"});
 }
 // 格式化函数
 const formatTime = dt => new Date(dt).toLocaleString()
