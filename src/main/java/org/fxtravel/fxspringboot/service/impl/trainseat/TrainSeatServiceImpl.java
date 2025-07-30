@@ -122,7 +122,7 @@ public class TrainSeatServiceImpl implements TrainSeatService {
 
         // 查找下一个可用座位
         Integer index = SeatUtil.nextAvailable(seatAllocation);
-        if (index == null) {
+        if (index == null || index < 0) {
             return false; // 没有可用座位
         }
 
